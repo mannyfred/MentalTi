@@ -256,7 +256,7 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
         {"ProcessId", id2 }
     };
 
-    if (id2 != 4 || g_Global->Vars().TargetProc != 0) {
+    if (id2 != 4 && g_Global->Vars().TargetProc == 0) {
 
         char exe[MAX_PATH] = { 0 };
         DWORD size = MAX_PATH;
