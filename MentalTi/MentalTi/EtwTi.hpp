@@ -369,8 +369,8 @@ namespace EtwTi {
 #define ETWTI_DEVICE_EVENT_FIELDS                   \
     X(DriverNameLength, USHORT)                     \
     X(DriverName, UNICODE_STRING)                   \
-    X(device_nameLength, USHORT)                     \
-    X(device_name, UNICODE_STRING)                   \
+    X(DeviceNameLength, USHORT)                     \
+    X(DeviceName, UNICODE_STRING)                   \
 
 
 #define X(member, type) type member;
