@@ -36,8 +36,8 @@ Stats g_Stats;
 
 void WINAPI EtwTiCallback(EVENT_RECORD* pEventRecord) {
 
-    // APCs always have PID as 4 in the event header, last check is to make sure we include APCs when a specific proc is specified. 
-    if (g_Global->Vars().TargetProc == 0 || g_Global->Vars().TargetProc == pEventRecord->EventHeader.ProcessId || pEventRecord->EventHeader.EventDescriptor.Id == 4) {
+    // APC/SETTHREADXONTEXT always have PID as 4 in the event header, last checks to make sure we include them when targeting a specific proc 
+    if (g_Global->Vars().TargetProc == 0 || g_Global->Vars().TargetProc == pEventRecord->EventHeader.ProcessId || pEventRecord->EventHeader.EventDescriptor.Id == 4 || pEventRecord->EventHeader.EventDescriptor.Id == 5) {
 
         g_Stats.Increment(pEventRecord->EventHeader.EventDescriptor.Id);
 
