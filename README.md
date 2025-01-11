@@ -119,8 +119,10 @@ Example output:
 
 ### Notes & Issues:
 - Single header dependency ([nlohmann/json](https://github.com/nlohmann/json))
-- Event ID 4 (QUEUE_REMOTE_APC) always has PID as 4 in the event header. Because of this, when you are targeting a specific PID, all APCs will be logged so you don't miss them.
+- Event ID 4 and 5 (QUEUE_REMOTE_APC/SETTHREAD_CONTEXT_REMOTE) always have PID as 4 in the event header. Because of this, when you are targeting a specific PID, all of these events will be logged so you don't miss them.
+
 - Uses buffered io - when trying to take a look at the output while it's running, it might not be valid json, or it might be empty all together. When exiting the program, stuff gets flushed to disk and you get everything.
+
 - UNICODE_STRING is retarded. Will most likely rework the ETW parser portion itself soon to make to current semi-working implementation less wonky and fully functional with all events (currently crashes when trying to get the `DriverName` from event ID 29/32 as US acts differently there)
 - If you restart the data hoarding one too many times, you might not receive all events you are interested no more (ALLOCVM_REMOTE seems to be wonky). If this happens, just do a restart.
 - Maybe some other issues and edge cases somewhere
