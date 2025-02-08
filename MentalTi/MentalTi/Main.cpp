@@ -10,7 +10,7 @@
 #include "Utils.hpp"
 
 #define	ETW_SESSION_NAME    L"MentalTi"
-#define STAT_INTERVAL_MS    5000       
+#define STAT_INTERVAL_MS    2500       
 
 static const GUID       g_EtwTiProviderGuid = { 0xF4E1897C, 0xBB5D, 0x5668, { 0xF1, 0xD8, 0x04, 0x0f, 0x4d, 0x8d, 0xd3, 0x44 } };
 
@@ -26,7 +26,7 @@ struct Stats {
 
         for (const auto& [event, count] : Counts) {
             if (count > 0) {
-                std::printf("[Event ID: %lu --- Count: %llu ]\n", event, count);
+                std::printf("[Event ID: %lu --- Count: %llu]\n", event, count);
             }
         }
     }
@@ -73,6 +73,8 @@ void QueryStats() {
     trace.LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES);
 
     HANDLE hConsole = ::GetStdHandle(STD_OUTPUT_HANDLE);
+
+    Sleep(2000);
 
     while (true) {
 
@@ -176,12 +178,12 @@ int main(int argc, char** argv) {
     if (!g_Global)
         return -1;
 
-    if (!Utils::ParseUserInput(argc, argv)) {
+    if (!Utils::SendIOCTL(MENTALTI_OPEN, 0)) {
         delete g_Global;
         return -1;
     }
 
-    if (!Utils::EnablePPL()) {
+    if (!Utils::ParseUserInput(argc, argv)) {
         delete g_Global;
         return -1;
     }
@@ -205,4 +207,3 @@ int main(int argc, char** argv) {
 
     return 0;
 }
-

@@ -12,9 +12,12 @@ struct GlobalData {
 	TRACEHANDLE             LoggerHandle;
 	LPWSTR					TraceName;
 	std::ofstream			OutputHandle;
-	ULONG					Keywords;
+	ULONGLONG				Keywords;
 	ULONG					TargetProc;
 	HANDLE					DriverHandle;
+	HANDLE					TargetHandle;
+	ULONG					TargetFlags;
+	bool					ModifyLoggingAll;
 };
 
 class Globals {

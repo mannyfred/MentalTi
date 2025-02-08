@@ -3,6 +3,7 @@
 Globals* Globals::s_Globals = nullptr;
 Globals* g_Global = nullptr;
 
+
 Globals::Globals() {
 
 
@@ -11,6 +12,11 @@ Globals::Globals() {
 
 	m_Data = { 0 };
 
+	m_Data.Keywords		= 0;
+	m_Data.TargetProc	= 0;
+	m_Data.TargetFlags	= 0;
+	m_Data.TargetHandle	= nullptr;
+	m_Data.ModifyLoggingAll = false;
 }
 
 Globals& Globals::Get() {
@@ -25,7 +31,7 @@ Globals::~Globals() {
 	if (m_Data.LoggerHandle != 0 && m_Data.LoggerInfo != nullptr) {
 		ULONG status = 0;
 		if ((status = ::StopTraceW(m_Data.LoggerHandle, m_Data.TraceName, m_Data.LoggerInfo)) != ERROR_SUCCESS) {
-			std::wprintf(L"[!] StopTraceW Failed: %d \n", status);
+			std::printf("[!] StopTraceW Failed: %d \n", status);
 		}
 		else {
 			std::printf("[i] Tracing Session Stopped \n");
@@ -40,6 +46,10 @@ Globals::~Globals() {
 
 	if (m_Data.LoggerInfo) {
 		::HeapFree(GetProcessHeap(), 0, m_Data.LoggerInfo);
+	}
+
+	if (m_Data.TargetHandle) {
+		::CloseHandle(m_Data.TargetHandle);
 	}
 }
 

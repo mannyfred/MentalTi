@@ -1,17 +1,62 @@
 #include "Utils.hpp"
 
-#define KMENTALTI	    0x8000
-#define MENTALTI_OPEN   CTL_CODE(KMENTALTI, 0x800, METHOD_NEITHER, FILE_ANY_ACCESS)
 
-extern void ParseKeywords(ULONG arg);
+extern void ParseKeywords(ULONGLONG arg);
 
 namespace Utils {
 
-    ULONG GetUlong(const std::string& arg) {
+    bool ModifyLogging(bool bRevert, ULONG flags) {
+
+        ULONG                       uRetLen = 0;
+        NTSTATUS                    STATUS  = 0;
+        PROCESS_LOGGING_INFORMATION pli     = { 0 };
+
+        fnNtQueryInformationProcess pNtQueryInformationProcess = (fnNtQueryInformationProcess)GetProcAddress(GetModuleHandle(TEXT("NTDLL.DLL")), "NtQueryInformationProcess");
+        fnNtSetInformationProcess   pNtSetInformationProcess = (fnNtSetInformationProcess)GetProcAddress(GetModuleHandle(TEXT("NTDLL.DLL")), "NtSetInformationProcess");
+
+        if (!pNtQueryInformationProcess || !pNtSetInformationProcess) {
+            std::printf("[!] GetProcAddress failed: %lu\n", GetLastError());
+            return false;
+        }
+
+        if (!g_Global->Vars().TargetHandle) {
+
+            g_Global->Vars().TargetHandle = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION, false, g_Global->Vars().TargetProc);
+
+            if (!g_Global->Vars().TargetHandle) {
+                std::printf("[!] Opening target failed: %lu\n", GetLastError());
+                return false;
+            }
+        }
+
+        if (!bRevert) {
+
+            if ((STATUS = pNtQueryInformationProcess(g_Global->Vars().TargetHandle, ProcessEnableLogging, &pli, sizeof(pli), &uRetLen)) != 0x00) {
+                std::printf("[!] NtQueryInformationProcess failed: 0x%0.8X\n", STATUS);
+                return false;
+            }
+
+            g_Global->Vars().TargetFlags = pli.Flags;
+
+            pli.Flags |= flags;
+        }
+        else {
+            pli.Flags = g_Global->Vars().TargetFlags;
+        }
+
+        if ((STATUS = pNtSetInformationProcess(g_Global->Vars().TargetHandle, ProcessEnableLogging, &pli, sizeof(pli))) != 0x00) {
+            std::printf("[!] NtSetInformationProcess failed: 0x%0.8X\n", STATUS);
+            return false;
+        }
+
+        return true;
+    }
+
+    ULONGLONG GetLongBoi(const std::string& arg) {
 
         if (arg.substr(0, 2) == "0x" || arg.substr(0, 2) == "0X") {
             try {
-                return std::stoul(arg, nullptr, 16);
+                return std::stoull(arg, nullptr, 16);
             }
             catch (const std::invalid_argument&) {
                 throw std::invalid_argument("Invalid string: " + arg);
@@ -22,7 +67,7 @@ namespace Utils {
         }
         else {
             try {
-                return std::stoul(arg);
+                return std::stoull(arg);
             }
             catch (const std::invalid_argument&) {
                 throw std::invalid_argument("Invalid string: " + arg);
@@ -47,10 +92,17 @@ namespace Utils {
 
     bool ParseUserKeywords(const std::string& input) {
 
-        ULONG hex = 0;
-        ULONG combined = 0;
+        ULONG       flags       = 0;
+        ULONGLONG   hex         = 0;
+        ULONGLONG   combined    = 0;
+
         std::stringstream ss(input);
         std::string piece;
+
+        if (input.empty() || input.find_first_not_of(' ') == std::string::npos) {
+            std::cerr << "Shit input" << std::endl;
+            return false;
+        }
 
         while (std::getline(ss, piece, '|')) {
 
@@ -61,20 +113,71 @@ namespace Utils {
                 piece = piece.substr(start, end - start + 1);
             }
 
-            try {
-                hex = GetUlong(piece);
-                ParseKeywords(hex);
-                combined |= hex;
+            if (!piece.empty()) {
+                try {
+                    hex = GetLongBoi(piece);
+                    ParseKeywords(hex);
+                    combined |= hex;
+                }
+                catch (const std::exception& e) {
+                    std::cerr << "Error with keyword: " << piece << " - " << e.what() << std::endl;
+                    return false;
+                }
             }
-            catch (const std::exception& e) {
-                std::cerr << "Error with keyword: " << piece << " - " << e.what() << std::endl;
-                return false;
+        }
+
+        if ((combined & READVM_LOCAL) == READVM_LOCAL ||
+            (combined & READVM_REMOTE) == READVM_REMOTE) {
+            flags |= (1 << 0);
+        }
+
+        if ((combined & WRITEVM_LOCAL) == WRITEVM_LOCAL ||
+            (combined & WRITEVM_REMOTE) == WRITEVM_REMOTE) {
+            flags |= (1 << 1);
+        }
+
+        if ((combined & PROCESS_SUSPEND) == PROCESS_SUSPEND ||
+            (combined & PROCESS_RESUME) == PROCESS_RESUME ||
+            (combined & PROCESS_FREEZE) == PROCESS_FREEZE ||
+            (combined & PROCESS_THAW) == PROCESS_THAW) {
+            flags |= (1 << 2);
+        }
+
+        if ((combined & THREAD_SUSPEND) == THREAD_SUSPEND ||
+            (combined & THREAD_RESUMED) == THREAD_RESUMED) {
+            flags |= (1 << 3);
+        }
+
+        //Unsure, on Win10 not supported, on Win11 supported but does not seem to make a difference
+        if ((combined & PROTECTVM_LOCAL) == PROTECTVM_LOCAL) {
+            flags |= (1 << 4);
+        }
+
+        if ((combined & PROTECTVM_REMOTE) == PROTECTVM_REMOTE) {
+            flags |= (1 << 5);
+        }
+
+        if (*(ULONG*)0x7FFE0260 >= 26100) {
+            if ((combined & IMPERSONATION_UP) == IMPERSONATION_UP ||
+                (combined & IMPERSONATION_REVERT) == IMPERSONATION_REVERT ||
+                (combined & IMPERSONATION_DOWN) == IMPERSONATION_DOWN) {
+                flags |= (1 << 6);
+            }
+        }
+
+        if (g_Global->Vars().TargetProc) {
+            ModifyLogging(false, flags);
+        }
+        else {
+            if (g_Global->Vars().ModifyLoggingAll) {
+                SendIOCTL(MENTALTI_ALL, flags);
             }
         }
 
         g_Global->Vars().Keywords = combined;
         return true;
     }
+
 
     bool ParseUserInput(const int argc, char** argv) {
 
@@ -86,10 +189,14 @@ namespace Utils {
         std::string pid_string = argv[2];
         if (pid_string == "all") {
             g_Global->Vars().TargetProc = 0;
+            g_Global->Vars().ModifyLoggingAll = true;
+        }
+        else if (pid_string == "all-og") {
+            g_Global->Vars().TargetProc = 0;
         }
         else if (!pid_string.empty()) {
             try {
-                ULONG pid = GetUlong(pid_string);
+                ULONG pid = (ULONG)GetLongBoi(pid_string);
                 g_Global->Vars().TargetProc = pid;
             }
             catch (const std::exception& e) {
@@ -123,28 +230,32 @@ namespace Utils {
 
     void PrintHelp() {
 
-        std::printf("\nExample: MentalTi.exe -proc <PID>/all \"0x10 | 0x80 | 0x2000\" .\\out.json \n\n");
-        std::printf("Arg1 & Arg2 - Specify PID to monitor a specific process or \"all\" to capture from all processes: \n\t -proc <PID> \n\t -proc all\n\n");
-        std::printf("Arg3 - Keywords for specific events: \n");
+        std::printf("\nExample: MentalTi.exe -proc 12215 \"0x10 | 0x80 | 0x2000\" .\\out.json \n\n");
+        std::printf("Arg1 & Arg2 - Specify PID to monitor a specific process or \"all\" to capture from all processes: \n\t -proc <PID> \n\t -proc all \n\t -proc all-og\n\n");
+        std::printf("Arg3 - Keywords for specific events (wrap in quotes): \n");
         std::printf(" 0x1\t\t- ALLOCVM_LOCAL\n 0x2\t\t- ALLOCVM_LOCAL_KERNEL\n 0x4\t\t- ALLOCVM_REMOTE\n 0x8\t\t- ALLOCVM_REMOTE_KERNEL\n 0x10\t\t- PROTECTVM_LOCAL\n 0x20\t\t- PROTECTVM_LOCAL_KERNEL\n");
         std::printf(" 0x40\t\t- PROTECTVM_REMOTE\n 0x80\t\t- PROTECTVM_REMOTE_KERNEL\n 0x100\t\t- MAPVIEW_LOCAL\n 0x200\t\t- MAPVIEW_LOCAL_KERNEL\n 0x400\t\t- MAPVIEW_REMOTE\n");
         std::printf(" 0x800\t\t- MAPVIEW_REMOTE_KERNEL\n 0x1000\t\t- QUEUE_USER_APC_REMOTE\n 0x2000\t\t- QUEUE_USER_APC_REMOTE_KERNEL\n 0x4000\t\t- SETTHREADCONTEXT_REMOTE\n");
         std::printf(" 0x8000\t\t- SETTHREADCONTEXT_REMOTE_KERNEL\n 0x10000\t- READVM_LOCAL\n 0x20000\t- READVM_REMOTE\n 0x40000\t- WRITEVM_LOCAL\n 0x80000\t- WRITEVM_REMOTE\n");
         std::printf(" 0x100000\t- SUSPEND_THREAD\n 0x200000\t- RESUME_THREAD\n 0x400000\t- SUSPEND_PROCESS\n 0x800000\t- RESUME_PROCESS\n 0x1000000\t- FREEZE_PROCESS\n");
-        std::printf(" 0x2000000\t- THAW_PROCESS\n 0x40000000\t- DRIVER_EVENT\n 0x80000000\t- DEVICE_EVENT\n\n");
+        std::printf(" 0x2000000\t- THAW_PROCESS\n 0x40000000\t- DRIVER_EVENT\n 0x80000000\t- DEVICE_EVENT\n 0x4000000000\t- IMPERSONATION_UP (24H2)\n");
+        std::printf(" 0x8000000000\t- IMPERSONATION_REVERT (24H2)\n 0x10000000000\t- SYSCALL_USAGE (24H2)\n 0x40000000000\t- IMPERSONATION_DOWN (24H2)\n\n");
         std::printf("Arg4 - Output file:\n\tC:\\Users\\someone\\log.json\n\tlog.json\n");
     }
 
-    bool EnablePPL() {
+    bool SendIOCTL(ULONG ioctl, ULONG flags) {
 
-        g_Global->Vars().DriverHandle = ::CreateFileW(L"\\\\.\\KMentalTi", GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (!g_Global->Vars().DriverHandle) {
 
-        if (g_Global->Vars().DriverHandle == nullptr) {
-            std::printf("[!] Error getting driver handle: %ld\n", GetLastError());
-            return false;
+            g_Global->Vars().DriverHandle = ::CreateFileW(L"\\\\.\\KMentalTi", GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+            if (g_Global->Vars().DriverHandle == nullptr) {
+                std::printf("[!] Error getting driver handle: %ld\n", GetLastError());
+                return false;
+            }
         }
-
-        if (!::DeviceIoControl(g_Global->Vars().DriverHandle, MENTALTI_OPEN, nullptr, 0, nullptr, 0, nullptr, nullptr)) {
+        //don't care, send flags via inBufferSize
+        if (!::DeviceIoControl(g_Global->Vars().DriverHandle, ioctl, nullptr, flags, nullptr, 0, nullptr, nullptr)) {
             std::printf("[!] Error with driver: %ld\n", GetLastError());
             return false;
         }
@@ -157,6 +268,10 @@ namespace Utils {
         switch (fdwCtrlType) {
 
         case CTRL_C_EVENT: {
+
+            if (g_Global->Vars().TargetHandle) {
+                ModifyLogging(true, 0);
+            }
 
             delete g_Global;
 

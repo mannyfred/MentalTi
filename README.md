@@ -5,12 +5,11 @@ Mentally ill Microsoft-Windows-Threat-Intelligence parser that somehow works for
 - Select only the events you are interested in
 - Select only specific members you want from an event (with a shitty UI)
 - Easily usable JSON output
-- V1 and V2 event definitions
+- Almost _full_ event definitions
 
 ### Compiling:
 - WDK for KMentalTi
 - C++17 for MentalTi
-- If you want V2 definitions, go to `EtwTi.hpp` and uncomment `#define V2`
 - In `Main.cpp` define the statistics interval (in milliseconds)
 
 ### Running:
@@ -25,8 +24,15 @@ sc start random
 ```
 
 Specify if you want to monitor all processes with `all`, or specify a PID:
+
+`-proc` flags:
+- `<pid>` - Log specified events only from a specific process.
+- `all` - Log specified events from all processes. Check `ParseUserKeywords` in `Utils.cpp`, depending on the specified events, event logging is modified for each running process and later created process (some event emissions are disabled unless enabled. Some processes have these enabled, some don't)
+- `all-og` - Log specified events from all processes. 
+
 ```
 MentalTi.exe -proc all "0x40 | 0x1000" log.json
+MentalTi.exe -proc all-og "0x100000 | 0x200000" log.json
 MentalTi.exe -proc 6969 "0x4 | 0x4000" log.json
 ```
 Third argument defines all of the events you are interested in. Full list of available events is displayed when running the program with incorrect amount of arguments.
@@ -119,10 +125,11 @@ Example output:
 
 ### Notes & Issues:
 - Single header dependency ([nlohmann/json](https://github.com/nlohmann/json))
-- Event ID 4 (QUEUE_REMOTE_APC) always has PID as 4 in the event header. Because of this, when you are targeting a specific PID, all APCs will be logged so you don't miss them.
+- Event ID 4 and 5 (`QUEUE_REMOTE_APC`/`SETTHREAD_CONTEXT_REMOTE`) always has PID as 4 in the event header. Because of this, when you are targeting a specific PID, all of these events will be logged so you don't miss them.
+- `IsSandboxedToken` in event 35 (`SYSCALL_USAGE`) not working.
+- `PreviousTokenTrustLevel`, `PreviousTokenGroups`, `CurrentTokenTrustLevel` and `CurrentTokenGroups` not included in events 33 and 36 (`IMPERSONATION_UP`/`IMPERSONATION_DOWN`) since they use some X type for those that I can't be bothered to figure out atm.
 - Uses buffered io - when trying to take a look at the output while it's running, it might not be valid json, or it might be empty all together. When exiting the program, stuff gets flushed to disk and you get everything.
-- UNICODE_STRING is retarded. Will most likely rework the ETW parser portion itself soon to make to current semi-working implementation less wonky and fully functional with all events (currently crashes when trying to get the `DriverName` from event ID 29/32 as US acts differently there)
-- If you restart the data hoarding one too many times, you might not receive all events you are interested no more (ALLOCVM_REMOTE seems to be wonky). If this happens, just do a restart.
+- `DriverName` in event ID 29/32 might be wonky.
 - Maybe some other issues and edge cases somewhere
 
 ### Why:

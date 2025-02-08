@@ -4,6 +4,7 @@
 #include <typeindex>
 #include <sstream>
 #include <variant>
+#include <sddl.h>
 #include "EtwTi.hpp"
 #include "Etw.hpp"
 #include "Global.hpp"
@@ -19,126 +20,142 @@ struct EventMetadata {
 
 std::unordered_map<std::type_index, void*> wrappers;
 
-#define X(member, type) {#member, [](Etw::EventParser& parser, const std::string& name) -> std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT> { \
+#define X(member, type) {#member, [](Etw::EventParser& parser, const std::string& name) -> std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID> { \
     auto result = parser.ParseEvent<type>(name);    \
     if (result) { return std::move(*result); }      \
     return {};                                      \
 }},
 
 template <typename T>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap();
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap();
 
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_REMOTE>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_REMOTE>() {
     return { ETWTI_ALLOCVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_LOCAL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_LOCAL>() {
     return { ETWTI_ALLOCVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE>() {
     return { ETWTI_QUEUE_APC_REMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE_KERNEL>() {
     return { ETWTI_QUEUE_APC_REMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_LOCAL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_LOCAL>() {
     return { ETWTI_MAPVIEW_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_REMOTE>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_REMOTE>() {
     return { ETWTI_MAPVIEW_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE>() {
     return { ETWTI_SETTHREADCONTEXT_REMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE_KERNEL>() {
     return { ETWTI_SETTHREADCONTEXT_REMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_DRIVER_EVENT>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_DRIVER_EVENT>() {
     return { ETWTI_DRIVER_EVENT_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_DEVICE_EVENT>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_DEVICE_EVENT>() {
     return { ETWTI_DEVICE_EVENT_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_RESUME_THREAD>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_RESUME_THREAD>() {
     return { ETWTI_SUSPENDRESUME_THREAD_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SUSPEND_THREAD>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SUSPEND_THREAD>() {
     return { ETWTI_SUSPENDRESUME_THREAD_FIELDS };
 }   
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_LOCAL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_LOCAL>() {
     return { ETWTI_PROTECTVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_REMOTE>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_REMOTE>() {
     return { ETWTI_PROTECTVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SUSPEND_PROCESS>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SUSPEND_PROCESS>() {
     return { ETWTI_SUSPENDRESUME_PROCESS_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_RESUME_PROCESS>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_RESUME_PROCESS>() {
     return { ETWTI_SUSPENDRESUME_PROCESS_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_THAW_PROCESS>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_THAW_PROCESS>() {
     return { ETWTI_SUSPENDRESUME_PROCESS_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_FREEZE_PROCESS>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_FREEZE_PROCESS>() {
     return { ETWTI_SUSPENDRESUME_PROCESS_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_READVM_LOCAL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_READVM_LOCAL>() {
     return { ETWTI_READVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_READVM_REMOTE>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_READVM_REMOTE>() {
     return { ETWTI_READVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_WRITEVM_LOCAL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_WRITEVM_LOCAL>() {
     return { ETWTI_WRITEVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_WRITEVM_REMOTE>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_WRITEVM_REMOTE>() {
     return { ETWTI_WRITEVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_LOCAL_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_LOCAL_KERNEL>() {
     return { ETWTI_ALLOCVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_REMOTE_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_ALLOCVM_REMOTE_KERNEL>() {
     return { ETWTI_ALLOCVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_LOCAL_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_LOCAL_KERNEL>() {
     return { ETWTI_PROTECTVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_REMOTE_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_PROTECTVM_REMOTE_KERNEL>() {
     return { ETWTI_PROTECTVM_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_LOCAL_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_LOCAL_KERNEL>() {
     return { ETWTI_MAPVIEW_LOCALREMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_REMOTE_KERNEL>() {
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_MAPVIEW_REMOTE_KERNEL>() {
     return { ETWTI_MAPVIEW_LOCALREMOTE_FIELDS };
+}
+template <>
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_SYSCALL_EVENT>() {
+    return { ETWTI_SYSCALL_EVENT_FIELDS };
+}
+template <>
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_IMPERSONATION_REVERT>() {
+    return { ETWTI_REVERT_TO_SELF_FIELDS };
+}
+template <>
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_IMPERSONATION_UP>() {
+    return { ETWTI_IMPERSONATE_UPDOWN_FIELDS };
+}
+template <>
+std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_IMPERSONATION_DOWN>() {
+    return { ETWTI_IMPERSONATE_UPDOWN_FIELDS };
 }
 #undef X
 
@@ -291,6 +308,17 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
                 else if constexpr (std::is_same_v<T, UNICODE_STRING>) {
                     json_data[name] = value.Buffer;
                 }
+                else if constexpr (std::is_same_v<T, SID>) {
+                    LPSTR lSid;
+                    if (::ConvertSidToStringSidA(std::addressof(value), &lSid)) {
+                        json_data[name] = lSid;
+                        LocalFree(lSid);
+                    }
+                    else {
+                        json_data[name] = "";
+                    }
+                }
+
             }, value_any);
         }
         idx++;
@@ -315,38 +343,42 @@ void Input(EventWrapper<T>& wrapper) {
     GetUserOptions(wrapper, field_names);
 }
 
-const std::unordered_map<ULONG, EventMetadata> Keywords {
-    { 0x1,          { 6,    [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL>(), parser); }}},
-    { 0x2,          { 26,   [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL_KERNEL>());            }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL_KERNEL>(), parser); }}},
-    { 0x4,          { 1,    [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE>(), parser); }}},
-    { 0x8,          { 21,   [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE_KERNEL>());           }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE_KERNEL>(), parser); }} },
-    { 0x10,         { 7,    [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL>());                 }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL>(), parser); }}},
-    { 0x20,         { 27,   [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL_KERNEL>());          }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL_KERNEL>(), parser); }}},
-    { 0x40,         { 2,    [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE>());                }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE>(), parser); }}},
-    { 0x80,         { 22,   [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE_KERNEL>());         }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE_KERNEL>(), parser); }}},
-    { 0x100,        { 8,    [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL>(), parser); }}},
-    { 0x200,        { 28,   [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL_KERNEL>());            }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL_KERNEL>(), parser); }}},
-    { 0x400,        { 3,    [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE>(), parser); }}},
-    { 0x800,        { 23,   [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE_KERNEL>());           }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE_KERNEL>(), parser); }}},
-    { 0x1000,       { 4,    [] { Input(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE>());             }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE>(), parser); }}},
-    { 0x2000,       { 24,   [] { Input(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE_KERNEL>());      }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE_KERNEL>(), parser);}}},
-    { 0x4000,       { 5,    [] { Input(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE>());         }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE>(), parser); }}},
-    { 0x8000,       { 25,   [] { Input(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE_KERNEL>());  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE_KERNEL>(), parser);}}},
-    { 0x10000,      { 11,   [] { Input(GetWrapper<EtwTi::ETWTI_READVM_LOCAL>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_READVM_LOCAL>(), parser); }}},
-    { 0x20000,      { 13,   [] { Input(GetWrapper<EtwTi::ETWTI_READVM_REMOTE>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_READVM_REMOTE>(), parser); }}},
-    { 0x40000,      { 12,   [] { Input(GetWrapper<EtwTi::ETWTI_WRITEVM_LOCAL>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_WRITEVM_LOCAL>(), parser); }}},
-    { 0x80000,      { 14,   [] { Input(GetWrapper<EtwTi::ETWTI_WRITEVM_REMOTE>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_WRITEVM_REMOTE>(), parser); }}},
-    { 0x100000,     { 15,   [] { Input(GetWrapper<EtwTi::ETWTI_SUSPEND_THREAD>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SUSPEND_THREAD>(), parser); }}},
-    { 0x200000,     { 16,   [] { Input(GetWrapper<EtwTi::ETWTI_RESUME_THREAD>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_RESUME_THREAD>(), parser); }}},
-    { 0x400000,     { 17,   [] { Input(GetWrapper<EtwTi::ETWTI_SUSPEND_PROCESS>());                 }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SUSPEND_PROCESS>(), parser); }}},
-    { 0x800000,     { 18,   [] { Input(GetWrapper<EtwTi::ETWTI_RESUME_PROCESS>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_RESUME_PROCESS>(), parser); }}},
-    { 0x1000000,    { 19,   [] { Input(GetWrapper<EtwTi::ETWTI_FREEZE_PROCESS>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_FREEZE_PROCESS>(), parser); }}},
-    { 0x2000000,    { 20,   [] { Input(GetWrapper<EtwTi::ETWTI_THAW_PROCESS>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_THAW_PROCESS>(), parser); }}},
-    { 0x40000000,   { 29,   [] { Input(GetWrapper<EtwTi::ETWTI_DRIVER_EVENT>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_DRIVER_EVENT>(), parser); }}},
-    { 0x80000000,   { 32,   [] { Input(GetWrapper<EtwTi::ETWTI_DEVICE_EVENT>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_DEVICE_EVENT>(), parser); }}}
+const std::unordered_map<ULONGLONG, EventMetadata> Keywords {
+    { 0x1,              { 6,    [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL>(), parser); }}},
+    { 0x2,              { 26,   [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL_KERNEL>());            }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL_KERNEL>(), parser); }}},
+    { 0x4,              { 1,    [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE>(), parser); }}},
+    { 0x8,              { 21,   [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE_KERNEL>());           }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_REMOTE_KERNEL>(), parser); }} },
+    { 0x10,             { 7,    [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL>());                 }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL>(), parser); }}},
+    { 0x20,             { 27,   [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL_KERNEL>());          }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_LOCAL_KERNEL>(), parser); }}},
+    { 0x40,             { 2,    [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE>());                }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE>(), parser); }}},
+    { 0x80,             { 22,   [] { Input(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE_KERNEL>());         }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_PROTECTVM_REMOTE_KERNEL>(), parser); }}},
+    { 0x100,            { 8,    [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL>(), parser); }}},
+    { 0x200,            { 28,   [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL_KERNEL>());            }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_LOCAL_KERNEL>(), parser); }}},
+    { 0x400,            { 3,    [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE>(), parser); }}},
+    { 0x800,            { 23,   [] { Input(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE_KERNEL>());           }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_MAPVIEW_REMOTE_KERNEL>(), parser); }}},
+    { 0x1000,           { 4,    [] { Input(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE>());             }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE>(), parser); }}},
+    { 0x2000,           { 24,   [] { Input(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE_KERNEL>());      }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_QUEUEUSERAPC_REMOTE_KERNEL>(), parser);}}},
+    { 0x4000,           { 5,    [] { Input(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE>());         }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE>(), parser); }}},
+    { 0x8000,           { 25,   [] { Input(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE_KERNEL>());  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SETTHREADCONTEXT_REMOTE_KERNEL>(), parser);}}},
+    { 0x10000,          { 11,   [] { Input(GetWrapper<EtwTi::ETWTI_READVM_LOCAL>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_READVM_LOCAL>(), parser); }}},
+    { 0x20000,          { 13,   [] { Input(GetWrapper<EtwTi::ETWTI_READVM_REMOTE>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_READVM_REMOTE>(), parser); }}},
+    { 0x40000,          { 12,   [] { Input(GetWrapper<EtwTi::ETWTI_WRITEVM_LOCAL>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_WRITEVM_LOCAL>(), parser); }}},
+    { 0x80000,          { 14,   [] { Input(GetWrapper<EtwTi::ETWTI_WRITEVM_REMOTE>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_WRITEVM_REMOTE>(), parser); }}},
+    { 0x100000,         { 15,   [] { Input(GetWrapper<EtwTi::ETWTI_SUSPEND_THREAD>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SUSPEND_THREAD>(), parser); }}},
+    { 0x200000,         { 16,   [] { Input(GetWrapper<EtwTi::ETWTI_RESUME_THREAD>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_RESUME_THREAD>(), parser); }}},
+    { 0x400000,         { 17,   [] { Input(GetWrapper<EtwTi::ETWTI_SUSPEND_PROCESS>());                 }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SUSPEND_PROCESS>(), parser); }}},
+    { 0x800000,         { 18,   [] { Input(GetWrapper<EtwTi::ETWTI_RESUME_PROCESS>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_RESUME_PROCESS>(), parser); }}},
+    { 0x1000000,        { 19,   [] { Input(GetWrapper<EtwTi::ETWTI_FREEZE_PROCESS>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_FREEZE_PROCESS>(), parser); }}},
+    { 0x2000000,        { 20,   [] { Input(GetWrapper<EtwTi::ETWTI_THAW_PROCESS>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_THAW_PROCESS>(), parser); }}},
+    { 0x40000000,       { 29,   [] { Input(GetWrapper<EtwTi::ETWTI_DRIVER_EVENT>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_DRIVER_EVENT>(), parser); }}},
+    { 0x80000000,       { 32,   [] { Input(GetWrapper<EtwTi::ETWTI_DEVICE_EVENT>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_DEVICE_EVENT>(), parser); }}},
+    { 0x4000000000,     { 33,   [] { Input(GetWrapper<EtwTi::ETWTI_IMPERSONATION_UP>());                }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_IMPERSONATION_UP>(), parser); }}},
+    { 0x8000000000,     { 34,   [] { Input(GetWrapper<EtwTi::ETWTI_IMPERSONATION_REVERT>());            }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_IMPERSONATION_REVERT>(), parser); }}},
+    { 0x10000000000,    { 35,   [] { Input(GetWrapper<EtwTi::ETWTI_SYSCALL_EVENT>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SYSCALL_EVENT>(), parser); }}},
+    { 0x40000000000,    { 36,   [] { Input(GetWrapper<EtwTi::ETWTI_IMPERSONATION_DOWN>());              }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_IMPERSONATION_DOWN>(), parser); }}}
 };
 
-void ParseKeywords(ULONG arg) {
+void ParseKeywords(ULONGLONG arg) {
 
     for (const auto& [keyword, metadata] : Keywords) {
 
