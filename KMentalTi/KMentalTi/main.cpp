@@ -153,20 +153,6 @@ _End:
 
 VOID UnLoader(DRIVER_OBJECT* DriverObject) {
 
-	//PVOID p = nullptr;
-
-	//PsSetCreateProcessNotifyRoutineEx(OnProcessNotify, true);
-
-	//auto t = &g_Global->Vars().AvlProcInfo;
-
-	//for (p = RtlEnumerateGenericTableAvl(t, 1);
-	//	p != nullptr;
-	//	p = RtlEnumerateGenericTableAvl(t, 0)) {
-	//	//PROCS_FLAGS* entry = (PROCS_FLAGS*)p;
-	//	//DbgPrint("[exit] Proc: %lu - Flags: %lu\n", entry->Pid, entry->Flags);
-	//	RtlDeleteElementGenericTableAvl(t, p);
-	//}
-
 	delete g_Global;
 	IoDeleteSymbolicLink(&symlink);
 	IoDeleteDevice(DriverObject->DeviceObject);
