@@ -76,8 +76,19 @@ namespace Etw {
                             return std::unique_ptr<T>(reinterpret_cast<T*>(cancer.release()));
                         }
 
-                        auto member_value = std::make_unique<T>();
-                        std::memset(member_value.get(), 0, property_len);
+                        //Balls
+                        auto member_value = [&]() -> std::unique_ptr<T> {
+                            if constexpr (std::is_same_v<T, SID>) {
+                                auto sid = std::make_unique<BYTE[]>(39);
+                                std::memset(sid.get(), 0, 39);
+                                return std::unique_ptr<T>(reinterpret_cast<T*>(sid.release()));
+                            }
+                            else {
+                                auto other = std::make_unique<T>();
+                                std::memset(other.get(), 0, property_len);
+                                return other;
+                            }
+                        }();
 
                         status = TdhGetProperty(_EventRecord, 0, nullptr, 1, &data_desc, property_len, reinterpret_cast<BYTE*>(member_value.get()));
 
