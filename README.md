@@ -5,7 +5,7 @@ Mentally ill Microsoft-Windows-Threat-Intelligence parser that somehow works for
 - Select only the events you are interested in
 - Select only specific members you want from an event (with a shitty UI)
 - Easily usable JSON output
-- Almost _full_ event definitions
+- Almost _full_ event definitions (check `EtwTi.hpp` for more info)
 
 ### Compiling:
 - WDK for KMentalTi
@@ -28,7 +28,7 @@ Specify if you want to monitor all processes with `all`, or specify a PID:
 `-proc` flags:
 - `<pid>` - Log specified events only from a specific process.
 - `all` - Log specified events from all processes. Check `ParseUserKeywords` in `Utils.cpp`, depending on the specified events, event logging is modified for each running process and later created process (some event emissions are disabled unless enabled. Some processes have these enabled, some don't)
-- `all-og` - Log specified events from all processes. 
+- `all-og` - Log specified events from all processes. Don't modify flags, keep them as they are for each process.
 
 ```
 MentalTi.exe -proc all "0x40 | 0x1000" log.json
