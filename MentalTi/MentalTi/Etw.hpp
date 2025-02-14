@@ -100,7 +100,7 @@ namespace Etw {
                     }
                 }
 
-                throw std::runtime_error("Not found");
+                throw std::runtime_error("Not found: " + member_name);
             }
             catch (const std::exception& e) {
                 std::cerr << "[!] Exception ParseEvent - " << e.what() << std::endl;

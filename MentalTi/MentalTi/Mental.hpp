@@ -62,14 +62,6 @@ std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, 
     return { ETWTI_SETTHREADCONTEXT_REMOTE_FIELDS };
 }
 template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_DRIVER_EVENT>() {
-    return { ETWTI_DRIVER_EVENT_FIELDS };
-}
-template <>
-std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_DEVICE_EVENT>() {
-    return { ETWTI_DEVICE_EVENT_FIELDS };
-}
-template <>
 std::map<std::string, std::function<std::variant<UCHAR, ULONG, PVOID, FILETIME, ULONG64, UNICODE_STRING, USHORT, SID>(Etw::EventParser&, const std::string&)>> FieldMap<EtwTi::ETWTI_RESUME_THREAD>() {
     return { ETWTI_SUSPENDRESUME_THREAD_FIELDS };
 }
@@ -314,9 +306,6 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
                         json_data[name] = lSid;
                         LocalFree(lSid);
                     }
-                    else {
-                        json_data[name] = "";
-                    }
                 }
 
             }, value_any);
@@ -370,8 +359,6 @@ const std::unordered_map<ULONGLONG, EventMetadata> Keywords {
     { 0x800000,         { 18,   [] { Input(GetWrapper<EtwTi::ETWTI_RESUME_PROCESS>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_RESUME_PROCESS>(), parser); }}},
     { 0x1000000,        { 19,   [] { Input(GetWrapper<EtwTi::ETWTI_FREEZE_PROCESS>());                  }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_FREEZE_PROCESS>(), parser); }}},
     { 0x2000000,        { 20,   [] { Input(GetWrapper<EtwTi::ETWTI_THAW_PROCESS>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_THAW_PROCESS>(), parser); }}},
-    { 0x40000000,       { 29,   [] { Input(GetWrapper<EtwTi::ETWTI_DRIVER_EVENT>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_DRIVER_EVENT>(), parser); }}},
-    { 0x80000000,       { 32,   [] { Input(GetWrapper<EtwTi::ETWTI_DEVICE_EVENT>());                    }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_DEVICE_EVENT>(), parser); }}},
     { 0x4000000000,     { 33,   [] { Input(GetWrapper<EtwTi::ETWTI_IMPERSONATION_UP>());                }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_IMPERSONATION_UP>(), parser); }}},
     { 0x8000000000,     { 34,   [] { Input(GetWrapper<EtwTi::ETWTI_IMPERSONATION_REVERT>());            }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_IMPERSONATION_REVERT>(), parser); }}},
     { 0x10000000000,    { 35,   [] { Input(GetWrapper<EtwTi::ETWTI_SYSCALL_EVENT>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_SYSCALL_EVENT>(), parser); }}},

@@ -283,19 +283,6 @@ namespace EtwTi {
     X(PcVadMmfName, UNICODE_STRING)                 \
     
 
-#define ETWTI_DRIVER_EVENT_FIELDS                   \
-    X(DriverNameLength, USHORT)                     \
-    X(DriverName, UNICODE_STRING)                   \
-    X(CodeIntegrityOption, ULONG)                   \
-
-
-#define ETWTI_DEVICE_EVENT_FIELDS                   \
-    X(DriverNameLength, USHORT)                     \
-    X(DriverName, UNICODE_STRING)                   \
-    X(DeviceNameLength, USHORT)                     \
-    X(DeviceName, UNICODE_STRING)                   \
-
-
     //Id 33 & 36
     //PreviousTokenTrustLevel, PreviousTokenGroups, 
     //CurrentTokenTrustLevel & CurrentTokenGroups not included
@@ -333,9 +320,6 @@ namespace EtwTi {
     X(CurrentTokenAuthenticationId, ULONG64)        \
     X(CurrentTokenGroupsCount, ULONG)               \
     
-
-////////
-//////
 
     //Id 34
 #define ETWTI_REVERT_TO_SELF_FIELDS                 \
@@ -379,14 +363,6 @@ namespace EtwTi {
 
     struct ETWTI_SYSCALL_EVENT {
         ETWTI_SYSCALL_EVENT_FIELDS;
-    };
-
-    struct ETWTI_DRIVER_EVENT {
-        ETWTI_DRIVER_EVENT_FIELDS;
-    };
-
-    struct ETWTI_DEVICE_EVENT {
-        ETWTI_DEVICE_EVENT_FIELDS;
     };
 
     struct ETWTI_QUEUEUSERAPC_REMOTE {

@@ -10,7 +10,7 @@
 #include "Utils.hpp"
 
 #define	ETW_SESSION_NAME    L"MentalTi"
-#define STAT_INTERVAL_MS    2500       
+#define STAT_INTERVAL_MS    3500       
 
 static const GUID       g_EtwTiProviderGuid = { 0xF4E1897C, 0xBB5D, 0x5668, { 0xF1, 0xD8, 0x04, 0x0f, 0x4d, 0x8d, 0xd3, 0x44 } };
 
