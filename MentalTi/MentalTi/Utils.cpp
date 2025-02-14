@@ -149,12 +149,14 @@ namespace Utils {
         }
 
         //Unsure, on Win10 not supported, on Win11 supported but does not seem to make a difference
-        if ((combined & PROTECTVM_LOCAL) == PROTECTVM_LOCAL) {
-            flags |= (1 << 4);
-        }
+        if (*(ULONG*)0x7FFE0260 >= 22000) {
+            if ((combined & PROTECTVM_LOCAL) == PROTECTVM_LOCAL) {
+                flags |= (1 << 4);
+            }
 
-        if ((combined & PROTECTVM_REMOTE) == PROTECTVM_REMOTE) {
-            flags |= (1 << 5);
+            if ((combined & PROTECTVM_REMOTE) == PROTECTVM_REMOTE) {
+                flags |= (1 << 5);
+            }
         }
 
         if (*(ULONG*)0x7FFE0260 >= 26100) {
