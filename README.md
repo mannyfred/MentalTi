@@ -129,7 +129,6 @@ Example output:
 - `IsSandboxedToken` in event 35 (`SYSCALL_USAGE`) not working.
 - `PreviousTokenTrustLevel`, `PreviousTokenGroups`, `CurrentTokenTrustLevel` and `CurrentTokenGroups` not included in events 33 and 36 (`IMPERSONATION_UP`/`IMPERSONATION_DOWN`) since they use some X type for those that I can't be bothered to figure out atm.
 - Uses buffered io - when trying to take a look at the output while it's running, it might not be valid json, or it might be empty all together. When exiting the program, stuff gets flushed to disk and you get everything.
-- `DriverName` in event ID 29/32 might be wonky.
 - Maybe some other issues and edge cases somewhere
 
 ### Why:
