@@ -208,11 +208,7 @@ namespace Utils {
         }
 
         std::string keywords = argv[3];
-        try {
-            ParseUserKeywords(keywords);
-        }
-        catch (const std::exception& e) {
-            std::cerr << "Error - " << e.what() << std::endl;
+        if (!ParseUserKeywords(keywords)) {
             return false;
         }
 
