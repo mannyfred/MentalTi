@@ -275,7 +275,7 @@ namespace EtwTi {
     X(Reg7, PVOID)                                  \
     X(RealEventTime, FILETIME)                      \
     X(PcVadQueryResult, ULONG)                      \
-    X(PcAllocationBase, PVOID)                      \
+    X(PcVadAllocationBase, PVOID)                   \
     X(PcVadAllocationProtect, ULONG)                \
     X(PcVadRegionType, ULONG)                       \
     X(PcVadRegionSize, PVOID)                       \
