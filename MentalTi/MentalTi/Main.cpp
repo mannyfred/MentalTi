@@ -12,7 +12,8 @@
 #define	ETW_SESSION_NAME    L"MentalTi"
 #define STAT_INTERVAL_MS    3500       
 
-static const GUID       g_EtwTiProviderGuid = { 0xF4E1897C, 0xBB5D, 0x5668, { 0xF1, 0xD8, 0x04, 0x0f, 0x4d, 0x8d, 0xd3, 0x44 } };
+static const GUID   g_EtwTiProviderGuid = { 0xF4E1897C, 0xBB5D, 0x5668, { 0xF1, 0xD8, 0x04, 0x0f, 0x4d, 0x8d, 0xd3, 0x44 } };
+
 
 struct Stats {
 
@@ -32,9 +33,12 @@ struct Stats {
     }
 };
 
+
 Stats g_Stats;
 
+
 void WINAPI EtwTiCallback(EVENT_RECORD* pEventRecord) {
+
 
     // APC/SETTHREADXONTEXT always have PID as 4 in the event header, last checks to make sure we include them when targeting a specific proc 
     if (g_Global->Vars().TargetProc == 0 || g_Global->Vars().TargetProc == pEventRecord->EventHeader.ProcessId || pEventRecord->EventHeader.EventDescriptor.Id == 4 || pEventRecord->EventHeader.EventDescriptor.Id == 5) {
@@ -55,6 +59,7 @@ void WINAPI EtwTiCallback(EVENT_RECORD* pEventRecord) {
 
     return;
 }
+
 
 void QueryStats() {
 
@@ -101,6 +106,7 @@ void QueryStats() {
 
     return;
 }
+
 
 bool StartEtwTi() {
 
@@ -167,6 +173,7 @@ _EndOfFunc:
     return true;
 }
 
+
 int main(int argc, char** argv) {
 
     if (argc != 5) {
@@ -178,7 +185,7 @@ int main(int argc, char** argv) {
     if (!g_Global)
         return -1;
 
-    if (!Utils::SendIOCTL(MENTALTI_OPEN, 0)) {
+    if (!Utils::SendIOCTL(MENTALTI_OPEN, 0, 0)) {
         delete g_Global;
         return -1;
     }

@@ -269,7 +269,7 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
 
         char exe[MAX_PATH] = { 0 };
         DWORD size = MAX_PATH;
-        HANDLE hProc = ::OpenProcess(PROCESS_QUERY_INFORMATION, false, id2);
+        HANDLE hProc = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, id2);
         ::QueryFullProcessImageNameA(hProc, 0, exe, &size);
         json_header["Metadata"]["Exe"] = exe;
         ::CloseHandle(hProc);

@@ -1,5 +1,5 @@
 #include <ntifs.h>
-#include "defs.hpp"
+#include "Defs.hpp"
 #include "Avl.hpp"
 #include "Memory.hpp"
 
@@ -51,6 +51,8 @@ extern "C" NTSTATUS DriverEntry(DRIVER_OBJECT* DriverObject, UNICODE_STRING* Reg
 		}
 		symlinkyes = true;
 
+		RtlInitializeGenericTableAvl(&g_Global->Vars().AvlProcInfo, AvlCompare, AvlAlloc, AvlFree, nullptr);
+
 	} while (false);
 
 	if (!NT_SUCCESS(STATUS)) {
@@ -70,6 +72,8 @@ extern "C" NTSTATUS DriverEntry(DRIVER_OBJECT* DriverObject, UNICODE_STRING* Reg
 	DriverObject->MajorFunction[IRP_MJ_CLOSE] = Close;
 	DriverObject->MajorFunction[IRP_MJ_CREATE] = Open;
 	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DeviceControl;
+
+	DbgPrint("[+] KMentalTi Loaded\n");
 
 	return STATUS;
 }
@@ -97,18 +101,20 @@ NTSTATUS DeviceControl(DEVICE_OBJECT* DeviceObject, IRP* Irp) {
 
 	UNREFERENCED_PARAMETER(DeviceObject);
 
-	NTSTATUS			STATUS		= STATUS_SUCCESS;
+	NTSTATUS			STATUS = STATUS_INVALID_PARAMETER_1;
 	PS_PROTECTION*		pPsProtect	= nullptr;
 
 	PEPROCESS			Process	= IoGetRequestorProcess(Irp);
 	IO_STACK_LOCATION*	pStack	= IoGetCurrentIrpStackLocation(Irp);
 	ULONG				ioctl	= pStack->Parameters.DeviceIoControl.IoControlCode;
 
-	if (ioctl == MENTALTI_OPEN) {
+	switch (ioctl) {
+
+	case MENTALTI_OPEN: {
 
 		if (!Process) {
 			STATUS = STATUS_NOT_FOUND;
-			goto _End;
+			break;
 		}
 
 		if (g_Global->Vars().b24H2) {
@@ -122,26 +128,34 @@ NTSTATUS DeviceControl(DEVICE_OBJECT* DeviceObject, IRP* Irp) {
 		pPsProtect->Type = 0x1;
 		pPsProtect->Audit = 0;
 		pPsProtect->Signer = 0x3;
+		break;
 	}
-	else if (ioctl == MENTALTI_ALL) {
+
+	case MENTALTI_ALL: {
 
 		g_Global->Vars().ulFlags = (ULONG)pStack->Parameters.DeviceIoControl.InputBufferLength;
 
 		STATUS = GetProcs();
 		if (!NT_SUCCESS(STATUS)) {
-			goto _End;
+			break;
 		}
 
 		STATUS = PsSetCreateProcessNotifyRoutineEx(OnProcessNotify, false);
-		if (!NT_SUCCESS(STATUS)) {
-			goto _End;
-		}
-	}
-	else {
-		STATUS = STATUS_INVALID_PARAMETER;
+		break;
 	}
 
-_End:
+	case MENTALTI_SINGLE: {
+
+		g_Global->Vars().ulFlags = (ULONG)pStack->Parameters.DeviceIoControl.InputBufferLength;
+		ULONG pid = (ULONG)pStack->Parameters.DeviceIoControl.OutputBufferLength;
+
+		STATUS = ModifyLogging(false, pid, 0);
+		break;
+	}
+
+	default:
+		break;
+	}
 
 	Irp->IoStatus.Status = STATUS;
 	Irp->IoStatus.Information = 0;
@@ -151,6 +165,7 @@ _End:
 	return Irp->IoStatus.Status;
 }
 
+
 VOID UnLoader(DRIVER_OBJECT* DriverObject) {
 
 	delete g_Global;
@@ -158,6 +173,7 @@ VOID UnLoader(DRIVER_OBJECT* DriverObject) {
 	IoDeleteDevice(DriverObject->DeviceObject);
 	DbgPrint("[+] Driver Unloaded\n");
 }
+
 
 NTSTATUS Close(DEVICE_OBJECT* DeviceObject, IRP* Irp) {
 
@@ -176,6 +192,7 @@ NTSTATUS Close(DEVICE_OBJECT* DeviceObject, IRP* Irp) {
 
 	return Irp->IoStatus.Status;
 }
+
 
 NTSTATUS Open(DEVICE_OBJECT* DeviceObject, IRP* Irp) {
 

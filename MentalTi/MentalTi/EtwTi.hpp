@@ -9,7 +9,7 @@
 namespace EtwTi {
 
     //Event ID 11 and 13 etc
-    //VaVadAllocationBase -> Onwards = V2 def  
+    //VaVadQueryResult -> Onwards = V2 def  
 #define ETWTI_READVM_LOCALREMOTE_FIELDS             \
     X(OperationStatus, ULONG)                       \
     X(CallingProcessId, ULONG)                      \
@@ -78,7 +78,7 @@ namespace EtwTi {
     
 
     //Event ID 2 and 7 etc
-    //VaVadAllocationBase -> Onwards = V2 def
+    //VaVadQueryResult -> Onwards = V2 def
     //TargetAddress -> Onwards = V3 def 
 #define ETWTI_PROTECTVM_LOCALREMOTE_FIELDS          \
     X(CallingProcessId, ULONG)                      \
@@ -191,7 +191,7 @@ namespace EtwTi {
 
 
     //Event ID 12 and 14 etc
-    //VaVadAllocationBase -> Onwards = V2 def
+    //VaVadQueryResult -> Onwards = V2 def
 #define ETWTI_WRITEVM_LOCALREMOTE_FIELDS            \
     X(OperationStatus, ULONG)                       \
     X(CallingProcessId, ULONG)                      \
@@ -275,7 +275,7 @@ namespace EtwTi {
     X(Reg7, PVOID)                                  \
     X(RealEventTime, FILETIME)                      \
     X(PcVadQueryResult, ULONG)                      \
-    X(PcAllocationBase, PVOID)                      \
+    X(PcVadAllocationBase, PVOID)                   \
     X(PcVadAllocationProtect, ULONG)                \
     X(PcVadRegionType, ULONG)                       \
     X(PcVadRegionSize, PVOID)                       \

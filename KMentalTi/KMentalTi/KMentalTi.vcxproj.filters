@@ -36,7 +36,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="defs.hpp">
+    <ClInclude Include="Defs.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Memory.hpp">

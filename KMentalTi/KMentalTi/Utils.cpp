@@ -72,8 +72,6 @@ NTSTATUS GetProcs() {
 		goto _End;
 	}
 
-	RtlInitializeGenericTableAvl(&g_Global->Vars().AvlProcInfo, AvlCompare, AvlAlloc, AvlFree, nullptr);
-
 	pFree = pSysProcBuffer;
 
 	pSysProcBuffer = (SYSTEM_PROCESSES*)((unsigned char*)pSysProcBuffer + pSysProcBuffer->NextEntryDelta);

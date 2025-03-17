@@ -123,7 +123,7 @@
     <ClInclude Include="Avl.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="defs.hpp" />
+    <ClInclude Include="Defs.hpp" />
     <ClInclude Include="Global.hpp" />
     <ClInclude Include="Memory.hpp" />
   </ItemGroup>

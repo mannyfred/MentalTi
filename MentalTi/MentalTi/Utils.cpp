@@ -3,54 +3,8 @@
 
 extern void ParseKeywords(ULONGLONG arg);
 
+
 namespace Utils {
-
-    bool ModifyLogging(bool bRevert, ULONG flags) {
-
-        ULONG                       uRetLen = 0;
-        NTSTATUS                    STATUS  = 0;
-        PROCESS_LOGGING_INFORMATION pli     = { 0 };
-
-        fnNtQueryInformationProcess pNtQueryInformationProcess = (fnNtQueryInformationProcess)GetProcAddress(GetModuleHandle(TEXT("NTDLL.DLL")), "NtQueryInformationProcess");
-        fnNtSetInformationProcess   pNtSetInformationProcess = (fnNtSetInformationProcess)GetProcAddress(GetModuleHandle(TEXT("NTDLL.DLL")), "NtSetInformationProcess");
-
-        if (!pNtQueryInformationProcess || !pNtSetInformationProcess) {
-            std::printf("[!] GetProcAddress failed: %lu\n", GetLastError());
-            return false;
-        }
-
-        if (!g_Global->Vars().TargetHandle) {
-
-            g_Global->Vars().TargetHandle = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION, false, g_Global->Vars().TargetProc);
-
-            if (!g_Global->Vars().TargetHandle) {
-                std::printf("[!] Opening target failed: %lu\n", GetLastError());
-                return false;
-            }
-        }
-
-        if (!bRevert) {
-
-            if ((STATUS = pNtQueryInformationProcess(g_Global->Vars().TargetHandle, ProcessEnableLogging, &pli, sizeof(pli), &uRetLen)) != 0x00) {
-                std::printf("[!] NtQueryInformationProcess failed: 0x%0.8X\n", STATUS);
-                return false;
-            }
-
-            g_Global->Vars().TargetFlags = pli.Flags;
-
-            pli.Flags |= flags;
-        }
-        else {
-            pli.Flags = g_Global->Vars().TargetFlags;
-        }
-
-        if ((STATUS = pNtSetInformationProcess(g_Global->Vars().TargetHandle, ProcessEnableLogging, &pli, sizeof(pli))) != 0x00) {
-            std::printf("[!] NtSetInformationProcess failed: 0x%0.8X\n", STATUS);
-            return false;
-        }
-
-        return true;
-    }
 
     ULONGLONG GetLongBoi(const std::string& arg) {
 
@@ -148,7 +102,6 @@ namespace Utils {
             flags |= (1 << 3);
         }
 
-        //Unsure, on Win10 not supported, on Win11 supported but does not seem to make a difference
         if (*(ULONG*)0x7FFE0260 >= 22000) {
             if ((combined & PROTECTVM_LOCAL) == PROTECTVM_LOCAL) {
                 flags |= (1 << 4);
@@ -168,11 +121,12 @@ namespace Utils {
         }
 
         if (g_Global->Vars().TargetProc) {
-            ModifyLogging(false, flags);
+            // Targeting a single process is still buggy
+            SendIOCTL(MENTALTI_SINGLE, flags, g_Global->Vars().TargetProc);
         }
         else {
             if (g_Global->Vars().ModifyLoggingAll) {
-                SendIOCTL(MENTALTI_ALL, flags);
+                SendIOCTL(MENTALTI_ALL, flags, 0);
             }
         }
 
@@ -226,6 +180,7 @@ namespace Utils {
         return true;
     }
 
+
     void PrintHelp() {
 
         std::printf("\nExample: MentalTi.exe -proc 12215 \"0x10 | 0x80 | 0x2000\" .\\out.json \n\n");
@@ -241,7 +196,8 @@ namespace Utils {
         std::printf("Arg4 - Output file:\n\tC:\\Users\\someone\\log.json\n\tlog.json\n");
     }
 
-    bool SendIOCTL(ULONG ioctl, ULONG flags) {
+
+    bool SendIOCTL(ULONG ioctl, ULONG flags, ULONG pid) {
 
         if (!g_Global->Vars().DriverHandle) {
 
@@ -252,8 +208,9 @@ namespace Utils {
                 return false;
             }
         }
-        //don't care, send flags via inBufferSize
-        if (!::DeviceIoControl(g_Global->Vars().DriverHandle, ioctl, nullptr, flags, nullptr, 0, nullptr, nullptr)) {
+
+        //don't care, just send some data via params
+        if (!::DeviceIoControl(g_Global->Vars().DriverHandle, ioctl, nullptr, flags, nullptr, pid, nullptr, nullptr)) {
             std::printf("[!] Error with driver: %ld\n", GetLastError());
             return false;
         }
@@ -261,15 +218,12 @@ namespace Utils {
         return true;
     }
 
+
     bool CtrlHandler(DWORD fdwCtrlType) {
 
         switch (fdwCtrlType) {
 
         case CTRL_C_EVENT: {
-
-            if (g_Global->Vars().TargetHandle) {
-                ModifyLogging(true, 0);
-            }
 
             delete g_Global;
 
