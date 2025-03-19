@@ -234,7 +234,7 @@ namespace EtwTi {
     X(TargetProcessStartKey, ULONG64)               \
     X(TargetProcessSignatureLevel, UCHAR)           \
     X(TargetProcessSectionSignatureLevel, UCHAR)    \
-    X(TargetProcessProtectione, UCHAR)              \
+    X(TargetProcessProtection, UCHAR)               \
     X(BaseAddress, PVOID)                           \
     X(ViewSize, PVOID)                              \
     X(AllocationType, ULONG)                        \

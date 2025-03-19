@@ -128,6 +128,8 @@ NTSTATUS DeviceControl(DEVICE_OBJECT* DeviceObject, IRP* Irp) {
 		pPsProtect->Type = 0x1;
 		pPsProtect->Audit = 0;
 		pPsProtect->Signer = 0x3;
+
+		STATUS = STATUS_SUCCESS;
 		break;
 	}
 
