@@ -1,4 +1,5 @@
 #include "Global.hpp"
+#include <DbgHelp.h>
 
 Globals* Globals::s_Globals = nullptr;
 Globals* g_Global = nullptr;
@@ -45,12 +46,14 @@ Globals::~Globals() {
 		::CloseTrace(m_Data.LoggerHandle);
 
 	if (m_Data.LoggerInfo) {
-		::HeapFree(GetProcessHeap(), 0, m_Data.LoggerInfo);
+		::HeapFree(::GetProcessHeap(), 0, m_Data.LoggerInfo);
 	}
 
 	if (m_Data.TargetHandle) {
 		::CloseHandle(m_Data.TargetHandle);
 	}
+
+	::SymCleanup((HANDLE)-1);
 }
 
 GlobalData& Globals::Vars() {

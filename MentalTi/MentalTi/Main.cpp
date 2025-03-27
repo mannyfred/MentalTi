@@ -14,7 +14,6 @@
 
 static const GUID   g_EtwTiProviderGuid = { 0xF4E1897C, 0xBB5D, 0x5668, { 0xF1, 0xD8, 0x04, 0x0f, 0x4d, 0x8d, 0xd3, 0x44 } };
 
-
 struct Stats {
 
     std::unordered_map<int, size_t> Counts;
@@ -191,6 +190,11 @@ int main(int argc, char** argv) {
     }
 
     if (!Utils::ParseUserInput(argc, argv)) {
+        delete g_Global;
+        return -1;
+    }
+
+    if (!Symbols::InitSymbols()) {
         delete g_Global;
         return -1;
     }

@@ -6,6 +6,7 @@ Mentally ill Microsoft-Windows-Threat-Intelligence parser that somehow works for
 - Select only specific members you want from an event (with a shitty UI)
 - Easily usable JSON output
 - Almost _full_ event definitions (check `EtwTi.hpp` for more info)
+- Symbol resolving for addresses in 64bit KnownDlls (setup `_NT_SYMBOL_PATH` for better results)
 
 ### Compiling:
 - WDK for KMentalTi
@@ -46,6 +47,7 @@ Fourth argument specifies the log file you wish to write the data to. This can b
 Output is compact, just use `jq` or similar to look at it.
 
 After starting it, console is updated at the defined interval. Events and their log count is displayed:
+
 ![image](https://github.com/user-attachments/assets/cd2e009f-8948-436a-b4ba-497a5a90b98d)
 
 
@@ -58,8 +60,18 @@ Example output:
 ```json
 [
   {
-    "ProcessId": 6969,
-    "BaseAddress": "0x10fef0a0000",
+    "ProcessId": 6928,
+    "BaseAddress": [
+      "0x2316bac0000"
+    ],
+    "Exe": "C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\4.18.25010.11-0\\MsMpEng.exe",
+    "Flips": 4
+  },
+  {
+    "ProcessId": 25052,
+    "BaseAddress": [
+      "0x7ff7cad80000"
+    ],
     "Exe": "C:\\Windows\\Temp\\defnotabeacon.exe",
     "Flips": 14
   }
@@ -75,11 +87,15 @@ Example output:
 [
   {
     "Data": {
-      "BaseAddress": "0x20017950000",
+      "BaseAddress": [
+        "0x20017950000"
+      ],
       "CallingProcessId": 13060,
       "LastProtectionMask": 4,
       "ProtectionMask": 32,
-      "RegionSize": "0x10000",
+      "RegionSize": [
+        "0x10000"
+      ],
       "TargetProcessId": 7468
     },
     "Metadata": {
@@ -90,11 +106,15 @@ Example output:
   },
   {
     "Data": {
-      "BaseAddress": "0x7ffc8f50d000",
+      "BaseAddress": [
+        "0x7ffc8f50d000"
+      ],
       "CallingProcessId": 7468,
       "LastProtectionMask": 4,
       "ProtectionMask": 32,
-      "RegionSize": "0x10",
+      "RegionSize": [
+        "0x10"
+      ],
       "TargetProcessId": 1084
     },
     "Metadata": {
@@ -118,9 +138,114 @@ Example output:
     "CallingTID": 12552,
     "TargetPID": 13060,
     "TargetTID": 9388,
-    "ApcRoutine": "0x1bdf95e0000"
+    "ApcRoutine": [
+      "0x1bdf95e0000"
+    ]
   }
 ]
+```
+
+4. Detect Remote Writes to Addresses in 64bit KnownDlls
+```bash
+cat log.json | jq -s '[ .[] | select(.Metadata.EventId == 14) | select(.Data.BaseAddress | length > 1)]'
+```
+Example output:
+```json
+[
+  {
+    "Data": {
+      "BaseAddress": [
+        "0x7ff8c59106c0",
+        "ntdll!ZwOpenProcessTokenEx"
+      ],
+      "BytesCopied": [
+        "0x10"
+      ],
+      "CallingProcessCreateTime": "07:48:16.306",
+      "CallingProcessId": 33176,
+      "CallingProcessProtection": 0,
+      "OperationStatus": 0,
+      "TargetProcessCreateTime": "07:49:37.279",
+      "TargetProcessId": 35948,
+      "TargetProcessProtection": 0
+    },
+    "Metadata": {
+      "EventId": 14,
+      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "ProcessId": 33176
+    }
+  },
+  {
+    "Data": {
+      "BaseAddress": [
+        "0x7ff8c59106a0",
+        "ntdll!NtOpenThreadTokenEx"
+      ],
+      "BytesCopied": [
+        "0x10"
+      ],
+      "CallingProcessCreateTime": "07:48:16.306",
+      "CallingProcessId": 33176,
+      "CallingProcessProtection": 0,
+      "OperationStatus": 0,
+      "TargetProcessCreateTime": "07:49:37.279",
+      "TargetProcessId": 35948,
+      "TargetProcessProtection": 0
+    },
+    "Metadata": {
+      "EventId": 14,
+      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "ProcessId": 33176
+    }
+  },
+  {
+    "Data": {
+      "BaseAddress": [
+        "0x7ff8c59105c0",
+        "ntdll!NtMapViewOfSection"
+      ],
+      "BytesCopied": [
+        "0x10"
+      ],
+      "CallingProcessCreateTime": "07:48:16.306",
+      "CallingProcessId": 33176,
+      "CallingProcessProtection": 0,
+      "OperationStatus": 0,
+      "TargetProcessCreateTime": "07:49:37.279",
+      "TargetProcessId": 35948,
+      "TargetProcessProtection": 0
+    },
+    "Metadata": {
+      "EventId": 14,
+      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "ProcessId": 33176
+    }
+  },
+  {
+    "Data": {
+      "BaseAddress": [
+        "0x7ff8c5910600",
+        "ntdll!NtUnmapViewOfSection"
+      ],
+      "BytesCopied": [
+        "0x10"
+      ],
+      "CallingProcessCreateTime": "07:48:16.306",
+      "CallingProcessId": 33176,
+      "CallingProcessProtection": 0,
+      "OperationStatus": 0,
+      "TargetProcessCreateTime": "07:49:37.279",
+      "TargetProcessId": 35948,
+      "TargetProcessProtection": 0
+    },
+    "Metadata": {
+      "EventId": 14,
+      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "ProcessId": 33176
+    }
+  }
+]
+
 ```
 
 ### Notes & Issues:

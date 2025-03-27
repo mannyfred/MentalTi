@@ -76,7 +76,6 @@ namespace Etw {
                             return std::unique_ptr<T>(reinterpret_cast<T*>(cancer.release()));
                         }
 
-                        //Balls
                         auto member_value = [&]() -> std::unique_ptr<T> {
                             if constexpr (std::is_same_v<T, SID>) {
                                 auto sid = std::make_unique<BYTE[]>(39);

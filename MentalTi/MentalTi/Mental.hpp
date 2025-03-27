@@ -7,10 +7,12 @@
 #include <sddl.h>
 #include "EtwTi.hpp"
 #include "Etw.hpp"
+#include "Symbols.hpp"
 #include "Global.hpp"
 #include "json.hpp"
 
 //If mental illness was a header
+
 
 struct EventMetadata {
     ULONG Id;
@@ -268,9 +270,12 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
     if (id2 != 4 && g_Global->Vars().TargetProc == 0) {
 
         char exe[MAX_PATH] = { 0 };
-        DWORD size = MAX_PATH;
-        HANDLE hProc = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, id2);
+
+        DWORD   size    = MAX_PATH;
+        HANDLE  hProc   = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, id2);
+
         ::QueryFullProcessImageNameA(hProc, 0, exe, &size);
+
         json_header["Metadata"]["Exe"] = exe;
         ::CloseHandle(hProc);
     }
@@ -282,29 +287,51 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
             auto value_any = field_parser(parser, name);
 
             std::visit([&](auto&& value) {
+
                 using T = std::decay_t<decltype(value)>;
+
                 if constexpr (std::is_same_v<T, UCHAR> || std::is_same_v<T, ULONG> || std::is_same_v<T, ULONG64> || std::is_same_v<T, USHORT>) {
                     json_data[name] = value;
                 }
                 else if constexpr (std::is_same_v<T, PVOID>) {
+
                     std::stringstream ss;
-                    ss << "0x" << std::hex << reinterpret_cast<uintptr_t>(value);
-                    json_data[name] = ss.str();
+                    uintptr_t address = reinterpret_cast<uintptr_t>(value);
+                    ss << "0x" << std::hex << address;
+
+                    json_data[name] = nlohmann::json::array({ ss.str() });
+
+                    if ((address & 0xFFF000000000) == 0x7FF000000000) {
+
+                        std::string symbol = Symbols::ResolveSymbol(address);
+
+                        if (!symbol.empty()) {
+                            json_data[name].push_back(symbol);
+                        }
+                    }
                 }
                 else if constexpr (std::is_same_v<T, FILETIME>) {
+
                     SYSTEMTIME st;
                     ::FileTimeToSystemTime(std::addressof(value), &st);
-                    std::string formatted_time = (st.wHour < 10 ? "0" : "") + std::to_string(st.wHour) + ":" + (st.wMinute < 10 ? "0" : "") + std::to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") + std::to_string(st.wSecond) + "." + (st.wMilliseconds < 10 ? "00" : (st.wMilliseconds < 100 ? "0" : "")) + std::to_string(st.wMilliseconds);
+
+                    std::string formatted_time = (st.wHour < 10 ? "0" : "") + std::to_string(st.wHour) + ":" 
+                        + (st.wMinute < 10 ? "0" : "") + std::to_string(st.wMinute) + ":" + (st.wSecond < 10 ? "0" : "") 
+                        + std::to_string(st.wSecond) + "." + (st.wMilliseconds < 10 ? "00" : (st.wMilliseconds < 100 ? "0" : "")) 
+                        + std::to_string(st.wMilliseconds);
+
                     json_data[name] = formatted_time;
                 }
                 else if constexpr (std::is_same_v<T, UNICODE_STRING>) {
                     json_data[name] = value.Buffer;
                 }
                 else if constexpr (std::is_same_v<T, SID>) {
+
                     LPSTR lSid;
+
                     if (::ConvertSidToStringSidA(std::addressof(value), &lSid)) {
                         json_data[name] = lSid;
-                        LocalFree(lSid);
+                        ::LocalFree(lSid);
                     }
                 }
 
