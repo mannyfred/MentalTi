@@ -72,15 +72,16 @@ namespace Symbols {
 
     bool InitSymbols() {
 
-        UNICODE_STRING      us          = { 0 };
-        OBJECT_ATTRIBUTES   oa          = { 0 };
-        NTSTATUS            STATUS      = 0x00;
-        ULONG               uRetLen     = 0x00,
-                            uContext    = 0x00;
-        HANDLE              hDirectory  = nullptr;
-        HMODULE             hModule     = nullptr;
+        UNICODE_STRING      us           = { 0 };
+        OBJECT_ATTRIBUTES   oa           = { 0 };
+        NTSTATUS            STATUS       = 0x00;
+        ULONG               uRetLen      = 0x00,
+                            uContext     = 0x00;
+        HANDLE              hDirectory   = nullptr;
+        HMODULE             hModule      = nullptr;
 
         HMODULE hNtdll = ::GetModuleHandle(TEXT("NTDLL.DLL"));
+        static WCHAR sKnownDLLs[] = L"\\KnownDlls";
 
         fnNtOpenDirectoryObject     pNtOpenDirectoryObject = reinterpret_cast<fnNtOpenDirectoryObject>(::GetProcAddress(hNtdll, "NtOpenDirectoryObject"));
         fnNtQueryDirectoryObject    pNtQueryDirectoryObject = reinterpret_cast<fnNtQueryDirectoryObject>(::GetProcAddress(hNtdll, "NtQueryDirectoryObject"));
@@ -88,8 +89,8 @@ namespace Symbols {
         if (!pNtOpenDirectoryObject || !pNtQueryDirectoryObject)
             return false;
 
-        us.Buffer = const_cast<PWSTR>(L"\\KnownDlls");
-        us.Length = std::wcslen(L"\\KnownDlls") * sizeof(WCHAR);
+        us.Buffer = sKnownDLLs;
+        us.Length = std::wcslen(sKnownDLLs) * sizeof(WCHAR);
         us.MaximumLength = us.Length + sizeof(WCHAR);
 
         InitializeObjectAttributes(&oa, &us, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
