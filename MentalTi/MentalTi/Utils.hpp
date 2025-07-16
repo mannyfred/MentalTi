@@ -6,7 +6,6 @@
 #include <vector>
 #include <sstream>
 #include <utility>
-#include <type_traits>
 #include "Global.hpp"
 
 #define KMENTALTI	    0x8000
@@ -30,13 +29,18 @@
 #define IMPERSONATION_REVERT    0x8000000000
 #define IMPERSONATION_DOWN      0x40000000000
 
-#define DEFER_IF(COND, ...)             \
-  ::Utils::ScopeExit mentalti_defer_    \
-  ( [&]{ if((COND)){ __VA_ARGS__; }} )  \
+// so we can ensure the uniqueness of each defer statement
+#define MTI_MACRO_CONCAT_IMPL_(X, Y) X##Y
+#define MTI_MACRO_CONCAT(X, Y) MTI_MACRO_CONCAT_IMPL_(X, Y)
+#define MTI_UNIQUE_NAME(X) MTI_MACRO_CONCAT(X, __COUNTER__)
 
-#define DEFER(...)                      \
-  ::Utils::ScopeExit mentalti_defer_    \
-  ( [&]{ __VA_ARGS__; } )               \
+#define DEFER_IF(COND, ...)                      \
+  ::Utils::ScopeExit MTI_UNIQUE_NAME(mtidefer_)  \
+  ( [&]{ if((COND)){ __VA_ARGS__; }} )           \
+
+#define DEFER(...)                               \
+  ::Utils::ScopeExit MTI_UNIQUE_NAME(mtidefer_)  \
+  ( [&]{ __VA_ARGS__; } )                        \
 
 namespace Utils {
 
