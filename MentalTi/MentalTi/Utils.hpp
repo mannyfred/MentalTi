@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <utility>
+#include <type_traits>
 #include "Global.hpp"
 
 #define KMENTALTI	    0x8000
@@ -28,6 +30,14 @@
 #define IMPERSONATION_REVERT    0x8000000000
 #define IMPERSONATION_DOWN      0x40000000000
 
+#define DEFER_IF(COND, ...)             \
+  ::Utils::ScopeExit mentalti_defer_    \
+  ( [&]{ if((COND)){ __VA_ARGS__; }} )  \
+
+#define DEFER(...)                      \
+  ::Utils::ScopeExit mentalti_defer_    \
+  ( [&]{ __VA_ARGS__; } )               \
+
 namespace Utils {
 
 	bool ParseUserKeywords(const std::string& input);
@@ -36,6 +46,27 @@ namespace Utils {
 	void PrintHelp();
 	bool SendIOCTL(ULONG ioctl, ULONG flags, ULONG pid);
 	bool CtrlHandler(DWORD fdwCtrlType);
+	
+	template<typename T>
+	class ScopeExit;
 }
+
+template<typename T>
+class Utils::ScopeExit {
+public:
+	using FunctorType = T;
+
+	ScopeExit& operator=(const ScopeExit&) = delete;
+	ScopeExit& operator=(ScopeExit&&)      = delete;
+
+	ScopeExit(const ScopeExit&) = delete;
+	ScopeExit(ScopeExit&&) = delete;
+	
+	ScopeExit(T&& obj) : obj_(std::move(obj)) {}
+	ScopeExit(const T& obj) : obj_(obj) {}
+	~ScopeExit() { obj_(); }
+private:
+	T obj_;
+};
 
 #endif // !UTILS_HPP
