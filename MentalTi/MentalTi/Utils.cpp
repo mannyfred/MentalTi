@@ -203,7 +203,7 @@ namespace Utils {
 
             g_Global->Vars().DriverHandle = ::CreateFileW(L"\\\\.\\KMentalTi", GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-            if (g_Global->Vars().DriverHandle == nullptr) {
+            if (g_Global->Vars().DriverHandle == INVALID_HANDLE_VALUE) {
                 std::printf("[!] Error getting driver handle: %ld\n", GetLastError());
                 return false;
             }
