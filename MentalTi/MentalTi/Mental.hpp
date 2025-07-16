@@ -181,6 +181,8 @@ void GetUserOptions(EventWrapper<T>& wrapper, const std::vector<std::string>& fi
     DWORD events        = 0;
     DWORD written       = 0;
     DWORD console_size  = 0;
+    DWORD old_con_mode  = 0; // old console output mode
+    DWORD new_con_mode  = 0; // modified console output mode
 
     HANDLE hConsole     = ::GetStdHandle(STD_OUTPUT_HANDLE);
     HANDLE hInput       = ::GetStdHandle(STD_INPUT_HANDLE);
@@ -188,6 +190,10 @@ void GetUserOptions(EventWrapper<T>& wrapper, const std::vector<std::string>& fi
     INPUT_RECORD                input       = { 0 };
     COORD                       cursor_pos  = { 0, 0 };
     CONSOLE_SCREEN_BUFFER_INFO  csbi        = { 0 };
+
+    ::GetConsoleMode(hInput, &old_con_mode);
+    new_con_mode = old_con_mode | ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS;
+    ::SetConsoleMode(hInput, new_con_mode);
 
     while (true) {
 
@@ -204,8 +210,6 @@ void GetUserOptions(EventWrapper<T>& wrapper, const std::vector<std::string>& fi
             std::cout << (i == current_index ? "> " : "  ");
             std::cout << field_names[i] << " [" << (wrapper.IsMemberActive(i) ? "+" : "-") << "]" << std::endl;
         }
-
-        ::SetConsoleMode(hInput, ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS);
 
         while (true) {
 
