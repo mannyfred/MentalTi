@@ -1,5 +1,7 @@
 #include "Symbols.hpp"
+#include "Utils.hpp"
 
+// oh god...
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4996)
 
@@ -79,6 +81,15 @@ namespace Symbols {
                             uContext     = 0x00;
         HANDLE              hDirectory   = nullptr;
         HMODULE             hModule      = nullptr;
+        OBJECT_DIRECTORY_INFORMATION* pInfo = nullptr;
+
+        DEFER({
+            if (hDirectory)
+                ::CloseHandle(hDirectory);
+
+            if (pInfo)
+                ::HeapFree(::GetProcessHeap(), 0, pInfo);
+        });
 
         HMODULE hNtdll = ::GetModuleHandle(TEXT("NTDLL.DLL"));
         static WCHAR sKnownDLLs[] = L"\\KnownDlls";
@@ -105,7 +116,7 @@ namespace Symbols {
             return false;
         }
 
-        OBJECT_DIRECTORY_INFORMATION* pInfo = reinterpret_cast<OBJECT_DIRECTORY_INFORMATION*>(::HeapAlloc(::GetProcessHeap(), HEAP_ZERO_MEMORY, 1024));
+        pInfo = reinterpret_cast<OBJECT_DIRECTORY_INFORMATION*>(::HeapAlloc(::GetProcessHeap(), HEAP_ZERO_MEMORY, 1024));
 
         for (;;) {
 
@@ -120,12 +131,6 @@ namespace Symbols {
 
             LoadSymbolsForModule(hModule, pInfo->Name.Buffer);
         }
-
-        if (hDirectory)
-            ::CloseHandle(hDirectory);
-
-        if (pInfo)
-            ::HeapFree(::GetProcessHeap(), 0, pInfo);
 
         return true;
     }
