@@ -1,10 +1,6 @@
 #include "Symbols.hpp"
 #include "Utils.hpp"
 
-// oh god...
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4996)
-
 namespace Symbols {
 
     using SymbolMap = std::unordered_map<DWORD64, SymbolInfo>;
@@ -29,7 +25,7 @@ namespace Symbols {
 
         std::wstring wstr(name);
 
-        ModuleInfo module_info = { base_addr, end_addr, std::filesystem::path(std::string(wstr.begin(), wstr.end())).stem().string() };
+        ModuleInfo module_info = { base_addr, end_addr, std::filesystem::path(wstr).stem().string() };
         SymbolMap symbol_map;
 
         ::SymEnumSymbols((HANDLE)-1, base_addr, nullptr, EnumSymbolsCallback, &symbol_map);
@@ -59,10 +55,7 @@ namespace Symbols {
                         if (address >= sym_addr && address < sym_addr + sym_info.size) {
 
                             uintptr_t offset = address - sym_addr;
-                            char hex[16];
-                            std::sprintf(hex, "%#llx", offset);
-
-                            return mod_info.mod_name + "!" + sym_info.name + "+" + std::string(hex);
+                            return mod_info.mod_name + "!" + sym_info.name + "+" + std::to_string(offset);
                         }
                     }
                 }
@@ -101,7 +94,7 @@ namespace Symbols {
             return false;
 
         us.Buffer = sKnownDLLs;
-        us.Length = std::wcslen(sKnownDLLs) * sizeof(WCHAR);
+        us.Length = static_cast<USHORT>(std::wcslen(sKnownDLLs) * sizeof(WCHAR));
         us.MaximumLength = us.Length + sizeof(WCHAR);
 
         InitializeObjectAttributes(&oa, &us, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
