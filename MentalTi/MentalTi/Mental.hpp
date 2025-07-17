@@ -237,9 +237,6 @@ void GetUserOptions(EventWrapper<T>& wrapper, const std::vector<std::string>& fi
             }
         }
     }
-
-    ::CloseHandle(hInput);
-    ::CloseHandle(hConsole);
 }
 
 template <typename T>
