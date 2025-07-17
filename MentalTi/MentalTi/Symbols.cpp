@@ -55,7 +55,10 @@ namespace Symbols {
                         if (address >= sym_addr && address < sym_addr + sym_info.size) {
 
                             uintptr_t offset = address - sym_addr;
-                            return mod_info.mod_name + "!" + sym_info.name + "+" + std::to_string(offset);
+                            std::stringstream ss;
+                            ss << std::hex << offset;
+
+                            return mod_info.mod_name + "!" + sym_info.name + "+" + ss.str();
                         }
                     }
                 }
