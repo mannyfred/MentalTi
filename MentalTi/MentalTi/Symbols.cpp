@@ -56,7 +56,7 @@ namespace Symbols {
 
                             uintptr_t offset = address - sym_addr;
                             std::stringstream ss;
-                            ss << std::hex << offset;
+                            ss << "0x" << std::hex << offset;
 
                             return mod_info.mod_name + "!" + sym_info.name + "+" + ss.str();
                         }
