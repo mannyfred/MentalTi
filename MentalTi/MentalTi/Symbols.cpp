@@ -1,7 +1,5 @@
 #include "Symbols.hpp"
-
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4996)
+#include "Utils.hpp"
 
 namespace Symbols {
 
@@ -27,7 +25,7 @@ namespace Symbols {
 
         std::wstring wstr(name);
 
-        ModuleInfo module_info = { base_addr, end_addr, std::filesystem::path(std::string(wstr.begin(), wstr.end())).stem().string() };
+        ModuleInfo module_info = { base_addr, end_addr, std::filesystem::path(wstr).stem().string() };
         SymbolMap symbol_map;
 
         ::SymEnumSymbols((HANDLE)-1, base_addr, nullptr, EnumSymbolsCallback, &symbol_map);
@@ -57,10 +55,10 @@ namespace Symbols {
                         if (address >= sym_addr && address < sym_addr + sym_info.size) {
 
                             uintptr_t offset = address - sym_addr;
-                            char hex[16];
-                            std::sprintf(hex, "%#llx", offset);
+                            std::stringstream ss;
+                            ss << std::hex << offset;
 
-                            return mod_info.mod_name + "!" + sym_info.name + "+" + std::string(hex);
+                            return mod_info.mod_name + "!" + sym_info.name + "+" + ss.str();
                         }
                     }
                 }
@@ -72,15 +70,25 @@ namespace Symbols {
 
     bool InitSymbols() {
 
-        UNICODE_STRING      us          = { 0 };
-        OBJECT_ATTRIBUTES   oa          = { 0 };
-        NTSTATUS            STATUS      = 0x00;
-        ULONG               uRetLen     = 0x00,
-                            uContext    = 0x00;
-        HANDLE              hDirectory  = nullptr;
-        HMODULE             hModule     = nullptr;
+        UNICODE_STRING      us           = { 0 };
+        OBJECT_ATTRIBUTES   oa           = { 0 };
+        NTSTATUS            STATUS       = 0x00;
+        ULONG               uRetLen      = 0x00,
+                            uContext     = 0x00;
+        HANDLE              hDirectory   = nullptr;
+        HMODULE             hModule      = nullptr;
+        OBJECT_DIRECTORY_INFORMATION* pInfo = nullptr;
+
+        DEFER({
+            if (hDirectory)
+                ::CloseHandle(hDirectory);
+
+            if (pInfo)
+                ::HeapFree(::GetProcessHeap(), 0, pInfo);
+        });
 
         HMODULE hNtdll = ::GetModuleHandle(TEXT("NTDLL.DLL"));
+        static WCHAR sKnownDLLs[] = L"\\KnownDlls";
 
         fnNtOpenDirectoryObject     pNtOpenDirectoryObject = reinterpret_cast<fnNtOpenDirectoryObject>(::GetProcAddress(hNtdll, "NtOpenDirectoryObject"));
         fnNtQueryDirectoryObject    pNtQueryDirectoryObject = reinterpret_cast<fnNtQueryDirectoryObject>(::GetProcAddress(hNtdll, "NtQueryDirectoryObject"));
@@ -88,8 +96,8 @@ namespace Symbols {
         if (!pNtOpenDirectoryObject || !pNtQueryDirectoryObject)
             return false;
 
-        us.Buffer = const_cast<PWSTR>(L"\\KnownDlls");
-        us.Length = std::wcslen(L"\\KnownDlls") * sizeof(WCHAR);
+        us.Buffer = sKnownDLLs;
+        us.Length = static_cast<USHORT>(std::wcslen(sKnownDLLs) * sizeof(WCHAR));
         us.MaximumLength = us.Length + sizeof(WCHAR);
 
         InitializeObjectAttributes(&oa, &us, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
@@ -104,7 +112,7 @@ namespace Symbols {
             return false;
         }
 
-        OBJECT_DIRECTORY_INFORMATION* pInfo = reinterpret_cast<OBJECT_DIRECTORY_INFORMATION*>(::HeapAlloc(::GetProcessHeap(), HEAP_ZERO_MEMORY, 1024));
+        pInfo = reinterpret_cast<OBJECT_DIRECTORY_INFORMATION*>(::HeapAlloc(::GetProcessHeap(), HEAP_ZERO_MEMORY, 1024));
 
         for (;;) {
 
@@ -119,12 +127,6 @@ namespace Symbols {
 
             LoadSymbolsForModule(hModule, pInfo->Name.Buffer);
         }
-
-        if (hDirectory)
-            ::CloseHandle(hDirectory);
-
-        if (pInfo)
-            ::HeapFree(::GetProcessHeap(), 0, pInfo);
 
         return true;
     }

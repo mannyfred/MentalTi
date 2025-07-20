@@ -180,7 +180,10 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    // TODO: give globals a static storage duration so 
+    // this becomes less messy.
     g_Global = new Globals;
+
     if (!g_Global)
         return -1;
 

@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <iomanip>
+#include <utility>
 #include "Global.hpp"
 
 #define KMENTALTI	    0x8000
@@ -28,6 +30,19 @@
 #define IMPERSONATION_REVERT    0x8000000000
 #define IMPERSONATION_DOWN      0x40000000000
 
+// so we can ensure the uniqueness of each defer statement
+#define MTI_MACRO_CONCAT_IMPL_(X, Y) X##Y
+#define MTI_MACRO_CONCAT(X, Y) MTI_MACRO_CONCAT_IMPL_(X, Y)
+#define MTI_UNIQUE_NAME(X) MTI_MACRO_CONCAT(X, __COUNTER__)
+
+#define DEFER_IF(COND, ...)                      \
+  ::Utils::ScopeExit MTI_UNIQUE_NAME(mtidefer_)  \
+  ( [&]{ if((COND)){ __VA_ARGS__; }} )           \
+
+#define DEFER(...)                               \
+  ::Utils::ScopeExit MTI_UNIQUE_NAME(mtidefer_)  \
+  ( [&]{ __VA_ARGS__; } )                        \
+
 namespace Utils {
 
 	bool ParseUserKeywords(const std::string& input);
@@ -36,6 +51,27 @@ namespace Utils {
 	void PrintHelp();
 	bool SendIOCTL(ULONG ioctl, ULONG flags, ULONG pid);
 	bool CtrlHandler(DWORD fdwCtrlType);
+	
+	template<typename T>
+	class ScopeExit;
 }
+
+template<typename T>
+class Utils::ScopeExit {
+public:
+	using FunctorType = T;
+
+	ScopeExit& operator=(const ScopeExit&) = delete;
+	ScopeExit& operator=(ScopeExit&&)      = delete;
+
+	ScopeExit(const ScopeExit&) = delete;
+	ScopeExit(ScopeExit&&) = delete;
+	
+	ScopeExit(T&& obj) : obj_(std::move(obj)) {}
+	ScopeExit(const T& obj) : obj_(obj) {}
+	~ScopeExit() { obj_(); }
+private:
+	T obj_;
+};
 
 #endif // !UTILS_HPP
