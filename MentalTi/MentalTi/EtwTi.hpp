@@ -3,8 +3,9 @@
 #include <winternl.h>
 
 
-//When choosing which members to retrieve, look at structs
-//Some members might not be available depending on your Win version
+// When choosing which members to retrieve, look at structs
+// Some members might not be available depending on your Win version
+// Check with this: https://github.com/zodiacon/EtwExplorer
 
 namespace EtwTi {
 

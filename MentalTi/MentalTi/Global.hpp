@@ -15,25 +15,23 @@ struct GlobalData {
 	ULONGLONG				Keywords;
 	ULONG					TargetProc;
 	HANDLE					DriverHandle;
-	HANDLE					TargetHandle;
-	ULONG					TargetFlags;
 	bool					ModifyLoggingAll;
+	bool					StackTrace;
 };
 
 class Globals {
 public:
 	Globals();
-	static Globals& Get();
-	Globals(Globals const&) = delete;
-	Globals& operator=(Globals const&) = delete;
 	~Globals();
 
+	Globals(Globals const&) = delete;
+	Globals& operator=(Globals const&) = delete;
+
+	static Globals& Get();
 	GlobalData& Vars();
 
 private:
-	static Globals* s_Globals;
 	GlobalData m_Data;
 };
-extern Globals* g_Global;
 
 #endif // !GLOBAL_HPP

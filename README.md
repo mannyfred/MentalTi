@@ -7,10 +7,11 @@ Mentally ill Microsoft-Windows-Threat-Intelligence parser that somehow works for
 - Easily usable JSON output
 - Almost _full_ event definitions (check `EtwTi.hpp` for more info)
 - Symbol resolving for addresses in 64bit KnownDlls (setup `_NT_SYMBOL_PATH` for better results)
+- Stacktraces for 64bit processes (work in progress)
 
 ### Compiling:
 - WDK for KMentalTi
-- C++17 for MentalTi
+- C++20 for MentalTi
 - In `Main.cpp` define the statistics interval (in milliseconds)
 
 ### Running:
@@ -52,7 +53,7 @@ After starting it, console is updated at the defined interval. Events and their 
 
 
 ### Example output parsing:
-1. Detect memory fluctuations
+#### 1. Detect memory fluctuations
 ```bash
 cat log.json | jq -s '[.[] | select(.Metadata.EventId == 7) | {PID: .Metadata.ProcessId, Base: .Data.BaseAddress, Exe: .Metadata.Exe, Flip: [.Data.ProtectionMask, .Data.LastProtectionMask]}] | group_by(.Base) | map(. as $group | {ProcessId: $group[0].PID, BaseAddress: $group[0].Base, Exe: $group[0].Exe, Flips: (reduce $group[] as $item ([]; if length == 0 or .[-1][0] != $item.Flip[1] then . + [$item.Flip] else . end) | length - 1)} | select(.Flips > 3))'
 ```
@@ -78,7 +79,7 @@ Example output:
 ]
 ```
 
-2. Detect RW -> RX remote protection change
+#### 2. Detect RW -> RX remote protection change
 ```bash
 cat log.json | jq -s '[.[] | select(.Metadata.EventId == 2 and .Data.LastProtectionMask == 4 and .Data.ProtectionMask == 32)]'
 ```
@@ -126,7 +127,7 @@ Example output:
 ]
 ```
 
-3. Detect APC injection (unbacked memory)
+#### 3. Detect APC injection (unbacked memory)
 ```bash
 cat log.json | jq -s '[ .[] | select(.Metadata.EventId == 4) | select(.Data.ApcRoutineVadMmfName == 0) | { CallingPID: .Data.CallingProcessId, CallingTID: .Data.CallingThreadId, TargetPID: .Data.TargetProcessId, TargetTID: .Data.TargetThreadId, ApcRoutine: .Data.ApcRoutine }]'
 ```
@@ -145,7 +146,7 @@ Example output:
 ]
 ```
 
-4. Detect Remote Writes to Addresses in 64bit KnownDlls
+#### 4. Detect Remote Writes to Addresses in 64bit KnownDlls
 ```bash
 cat log.json | jq -s '[ .[] | select(.Metadata.EventId == 14) | select(.Data.BaseAddress | length > 1)]'
 ```

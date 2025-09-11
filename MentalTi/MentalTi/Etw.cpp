@@ -10,6 +10,18 @@ namespace Etw {
         return _EventRecord->EventHeader.ProcessId;
     }
 
+    bool EventParser::StackTrace64Present() const {
+        return _EventRecord->ExtendedData && _EventRecord->ExtendedData[0].ExtType == EVENT_HEADER_EXT_TYPE_STACK_TRACE64;
+    }
+
+    ULONG EventParser::StackFrameCount() const {
+        return _EventRecord->ExtendedData[0].DataSize / sizeof(ULONG64);
+    }
+
+    ULONG64* EventParser::StackFrames() const {
+        return (ULONG64*)_EventRecord->ExtendedData[0].DataPtr;
+    }
+
     std::unique_ptr<TRACE_EVENT_INFO> EventParser::GetEventInfo() {
 
         ULONG buffer_size = 0;

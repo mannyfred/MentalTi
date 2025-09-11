@@ -3,6 +3,7 @@
 
 #include <typeindex>
 #include <sstream>
+#include <format>
 #include <variant>
 #include <sddl.h>
 #include "EtwTi.hpp"
@@ -268,7 +269,7 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
         {"ProcessId", id2 }
     };
 
-    if (id2 != 4 && g_Global->Vars().TargetProc == 0) {
+    if (id2 != 4 && Globals::Get().Vars().TargetProc == 0) {
 
         char exe[MAX_PATH] = { 0 };
 
@@ -296,15 +297,13 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
                 }
                 else if constexpr (std::is_same_v<T, PVOID>) {
 
-                    std::stringstream ss;
-                    uintptr_t address = reinterpret_cast<uintptr_t>(value);
-                    ss << "0x" << std::hex << address;
+                    uintptr_t addr = reinterpret_cast<uintptr_t>(value);
 
-                    json_data[name] = nlohmann::json::array({ ss.str() });
+                    json_data[name] = nlohmann::json::array({ std::format("0x{:x}", addr) });
 
-                    if ((address & 0xFFF000000000) == 0x7FF000000000) {
+                    if ((addr & 0xFFF000000000) == 0x7FF000000000) {
 
-                        std::string symbol = Symbols::ResolveSymbol(address);
+                        std::string symbol = Symbols::ResolveSymbol(addr);
 
                         if (!symbol.empty()) {
                             json_data[name].push_back(symbol);
@@ -341,10 +340,33 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
         idx++;
     }
 
+    if (parser.StackTrace64Present()) {
+
+        auto count  = parser.StackFrameCount();
+        auto frames = parser.StackFrames();
+
+        printf("Stack tracing for event ID: %d\n", parser.GetEventId());
+
+        if (frames) {
+
+            auto& json_stack = json_header["Metadata"]["Stack"] = nlohmann::json::array();
+
+            for (ULONG i = 1; i < count; i++) {
+
+                if (frames[i] >= 0xFFFF000000000000) {
+                    continue;
+                }
+
+                std::string symbol = Symbols::ResolveSymbol(frames[i]);
+                json_stack.push_back(symbol.empty() ? std::format("0x{:x}", frames[i]) : symbol);
+            }
+        }
+    }
+    
     json_header["Data"] = json_data;
 
     std::string json_str = json_header.dump(-1);
-    g_Global->Vars().OutputHandle.write(json_str.c_str(), json_str.size());
+    Globals::Get().Vars().OutputHandle.write(json_str.c_str(), json_str.size());
 }
 
 template <typename T>
@@ -358,7 +380,7 @@ void Input(EventWrapper<T>& wrapper) {
     }
 
     GetUserOptions(wrapper, field_names);
-}
+}   
 
 const std::unordered_map<ULONGLONG, EventMetadata> Keywords {
     { 0x1,              { 6,    [] { Input(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL>());                   }, [](Etw::EventParser& parser) { ParserWrapper(GetWrapper<EtwTi::ETWTI_ALLOCVM_LOCAL>(), parser); }}},

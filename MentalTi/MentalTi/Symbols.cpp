@@ -55,10 +55,7 @@ namespace Symbols {
                         if (address >= sym_addr && address < sym_addr + sym_info.size) {
 
                             uintptr_t offset = address - sym_addr;
-                            std::stringstream ss;
-                            ss << std::hex << offset;
-
-                            return mod_info.mod_name + "!" + sym_info.name + "+" + ss.str();
+                            return mod_info.mod_name + "!" + sym_info.name + "+" + std::format("0x{:x}", offset);
                         }
                     }
                 }
@@ -103,12 +100,12 @@ namespace Symbols {
         InitializeObjectAttributes(&oa, &us, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
 
         if ((STATUS = pNtOpenDirectoryObject(&hDirectory, DIRECTORY_QUERY | DIRECTORY_TRAVERSE, &oa)) != 0x00) {
-            std::printf("[!] NtOpenDirectoryObject Failed: 0x%0.8X\n", STATUS);
+            std::printf("[!] NtOpenDirectoryObject: 0x%0.8X\n", STATUS);
             return false;
         }
 
         if (!::SymInitialize((HANDLE)-1, nullptr, true)) {
-            std::printf("[!] SymInitialize Failed: %ld\n", ::GetLastError());
+            std::printf("[!] SymInitialize: %ld\n", ::GetLastError());
             return false;
         }
 
