@@ -134,19 +134,26 @@ bool StartEtwTi() {
         goto _EndOfFunc;
     }
 
-    // For testing
     if (Globals::Get().Vars().StackTrace) {
 
         ENABLE_TRACE_PARAMETERS	trace_params    = { 0 };
         EVENT_FILTER_DESCRIPTOR	filter_desc     = { 0 };
-        EVENT_FILTER_EVENT_ID	filter_event    = { 0 };
+        EVENT_FILTER_EVENT_ID*	filter_events   = nullptr;
 
-        filter_event.FilterIn   = true;
-        filter_event.Count      = 1;
-        filter_event.Events[0]  = 2;
+        size_t filter_size = sizeof(EVENT_FILTER_EVENT_ID) + (Globals::Get().Vars().StackTracedEvents.size() - 1) * sizeof(USHORT);
 
-        filter_desc.Ptr     = (ULONGLONG)&filter_event;
-        filter_desc.Size    = sizeof(filter_event);
+        auto mem = std::make_unique<BYTE[]>(filter_size);
+        filter_events = reinterpret_cast<EVENT_FILTER_EVENT_ID*>(mem.get());
+
+        filter_events->FilterIn   = true;
+        filter_events->Count      = static_cast<USHORT>(Globals::Get().Vars().StackTracedEvents.size());
+        
+        for (size_t i = 0; i < Globals::Get().Vars().StackTracedEvents.size(); i++) {
+            filter_events->Events[i] = Globals::Get().Vars().StackTracedEvents[i];
+        }
+
+        filter_desc.Ptr     = (ULONGLONG)filter_events;
+        filter_desc.Size    = static_cast<ULONG>(filter_size);
         filter_desc.Type    = EVENT_FILTER_TYPE_STACKWALK;
 
         trace_params.Version             = ENABLE_TRACE_PARAMETERS_VERSION_2;
@@ -182,7 +189,7 @@ _EndOfFunc:
 
 int main(int argc, char** argv) {
 
-    if (argc != 5) {
+    if (argc < 5) {
         Utils::PrintHelp();
         return -1;
     }

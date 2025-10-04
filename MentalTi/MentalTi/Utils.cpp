@@ -187,13 +187,32 @@ namespace Utils {
             return false;
         }
 
+        if (argc >= 7) {
+
+            std::string flag = argv[5];
+
+            if (flag == "-trace") {
+
+                std::string ids = argv[6];
+
+                for (auto&& tok : std::views::split(ids, ',')) {
+
+                    std::string s(tok.begin(), tok.end());
+                    Globals::Get().Vars().StackTracedEvents.push_back(std::stoi(s));
+                }
+
+                Globals::Get().Vars().StackTrace = true;
+            }
+        }
+
         return true;
     }
 
 
     void PrintHelp() {
 
-        std::printf("\nExample: MentalTi.exe -proc 12215 \"0x10 | 0x80 | 0x2000\" .\\out.json \n\n");
+        std::printf("\nExample1: MentalTi.exe -proc 12215 \"0x10 | 0x80 | 0x2000\" .\\out.json ");
+        std::printf("\nExample2: MentalTi.exe -proc all \"0x4 | 0x40 | 0x400 | 0x1000\" .\\log.json -trace 1,2,3 \n\n");
         std::printf("Arg1 & Arg2 - Specify PID to monitor a specific process or \"all\" to capture from all processes: \n\t -proc <PID> \n\t -proc all \n\t -proc all-og\n\n");
         std::printf("Arg3 - Keywords for specific events (wrap in quotes): \n");
         std::printf(" 0x1\t\t- ALLOCVM_LOCAL\n 0x2\t\t- ALLOCVM_LOCAL_KERNEL\n 0x4\t\t- ALLOCVM_REMOTE\n 0x8\t\t- ALLOCVM_REMOTE_KERNEL\n 0x10\t\t- PROTECTVM_LOCAL\n 0x20\t\t- PROTECTVM_LOCAL_KERNEL\n");

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iomanip>
 #include <utility>
+#include <ranges>
 #include "Global.hpp"
 
 #define KMENTALTI	    0x8000

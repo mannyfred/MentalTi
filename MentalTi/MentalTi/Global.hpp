@@ -5,6 +5,7 @@
 #include <evntrace.h>
 #include <fstream>
 #include <map>
+#include <vector>
 
 struct GlobalData {
 
@@ -17,6 +18,7 @@ struct GlobalData {
 	HANDLE					DriverHandle;
 	bool					ModifyLoggingAll;
 	bool					StackTrace;
+	std::vector<USHORT>		StackTracedEvents;
 };
 
 class Globals {
