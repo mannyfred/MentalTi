@@ -269,18 +269,7 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
         {"ProcessId", id2 }
     };
 
-    if (id2 != 4 && Globals::Get().Vars().TargetProc == 0) {
-
-        char exe[MAX_PATH] = { 0 };
-
-        DWORD   size    = MAX_PATH;
-        HANDLE  hProc   = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, id2);
-
-        ::QueryFullProcessImageNameA(hProc, 0, exe, &size);
-
-        json_header["Metadata"]["Exe"] = exe;
-        ::CloseHandle(hProc);
-    }
+    json_header["Metadata"]["Exe"] = Symbols::ReturnProcessExecutable(id2);
 
     for (const auto& [name, field_parser] : field_map) {
 
@@ -345,8 +334,6 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
         auto count  = parser.StackFrameCount();
         auto frames = parser.StackFrames();
 
-        printf("Stack tracing for event ID: %d\n", parser.GetEventId());
-
         if (frames) {
 
             auto& json_stack = json_header["Metadata"]["Stack"] = nlohmann::json::array();
@@ -358,6 +345,11 @@ void ParserWrapper(const EventWrapper<T>& wrapper, Etw::EventParser& parser) {
                 }
 
                 std::string symbol = Symbols::ResolveSymbol(frames[i]);
+
+                if (symbol.empty()) {
+                    symbol = Symbols::ResolveProcessSymbol(id2, frames[i]);
+                }
+
                 json_stack.push_back(symbol.empty() ? std::format("0x{:x}", frames[i]) : symbol);
             }
         }

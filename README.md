@@ -7,7 +7,7 @@ Mentally ill Microsoft-Windows-Threat-Intelligence parser that somehow works for
 - Easily usable JSON output
 - Almost _full_ event definitions (check `EtwTi.hpp` for more info)
 - Symbol resolving for addresses in 64bit KnownDlls (setup `_NT_SYMBOL_PATH` for better results)
-- Stacktraces for 64bit processes (work in progress)
+- Stacktraces for 64bit processes
 
 ### Compiling:
 - WDK for KMentalTi
@@ -37,6 +37,9 @@ MentalTi.exe -proc all "0x40 | 0x1000" log.json
 MentalTi.exe -proc all-og "0x100000 | 0x200000" log.json
 MentalTi.exe -proc 6969 "0x4 | 0x4000" log.json
 ```
+
+---
+
 Third argument defines all of the events you are interested in. Full list of available events is displayed when running the program with incorrect amount of arguments.
 For each event, select the members you actually want to retrieve:
 
@@ -44,8 +47,64 @@ For each event, select the members you actually want to retrieve:
 
 _SPACEBAR to select/deselect member, Arrow UP/DOWN for movement, Enter to confirm and continue_
 
+---
+
 Fourth argument specifies the log file you wish to write the data to. This can be a relative or full path.
 Output is compact, just use `jq` or similar to look at it.
+
+---
+
+Fifth argument and so on configures stacktracing for 64-bit processes. To enable stacktracing, use the `-trace` flag with desired Event IDs:
+```
+MentalTi.exe -proc all-og "0x4 | 0x40 | 0x400 | 0x1000" log.json -trace 1,2,3
+```
+_Make sure Event IDs are comma separated and without spaces_
+
+Besides `*_KERNEL` events, stacktraces for the following Event IDs also aren't supported as the traces contain only kernel-mode addresses:
+- 4 - `QUEUEUSERAPC_REMOTE`
+- 5 - `SETTHREADCONTEXT_REMOTE`
+
+> [!NOTE]
+> Stacktracing might cause you to lose events. Increasing `EVENT_TRACE_PROPERTIES::BufferSize` can help
+
+Stacktraces contain offsets from the main process' image alongside 64-bit KnownDll addresses, kernel addresses are filtered out:
+```json
+{
+  "Data": {
+    "AllocationType": 8192,
+    "BaseAddress": [
+      "0x25c10fd0000"
+    ]
+  },
+  "Metadata": {
+    "EventId": 6,
+    "Exe": "powershell.exe",
+    "ProcessId": 5460,
+    "Stack": [
+      "ntdll!NtAllocateVirtualMemory+0x14",
+      "ntdll!RtlCreateHeap+0x482",
+      "ntdll!RtlCreateHeap+0x22",
+      "kernelbase!HeapCreate+0x4b",
+      "0x7ffe21bb04fe",
+      "0x7ffe21bb0485",
+      "0x7ffe21bb0884",
+      "0x7ffe21be7706",
+      "0x7ffe21b5c930",
+      "0x7ffe21bedd7d",
+      "0x7ffe21a8f829",
+      "0x7ffe21e3e173",
+      "0x7ffe21e3e0e0",
+      "powershell.exe+0x46d8",
+      "powershell.exe+0x1dcc",
+      "powershell.exe+0x51e4",
+      "kernel32!BaseThreadInitThunk+0x17",
+      "ntdll!RtlUserThreadStart+0x2c"
+    ]
+  }
+}
+```
+
+---
 
 After starting it, console is updated at the defined interval. Events and their log count is displayed:
 
@@ -65,7 +124,7 @@ Example output:
     "BaseAddress": [
       "0x2316bac0000"
     ],
-    "Exe": "C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\4.18.25010.11-0\\MsMpEng.exe",
+    "Exe": "MsMpEng.exe",
     "Flips": 4
   },
   {
@@ -73,7 +132,7 @@ Example output:
     "BaseAddress": [
       "0x7ff7cad80000"
     ],
-    "Exe": "C:\\Windows\\Temp\\defnotabeacon.exe",
+    "Exe": "defnotabeacon.exe",
     "Flips": 14
   }
 ]
@@ -101,7 +160,7 @@ Example output:
     },
     "Metadata": {
       "EventId": 2,
-      "Exe": "A:\\random.exe",
+      "Exe": "random.exe",
       "ProcessId": 13060
     }
   },
@@ -120,7 +179,7 @@ Example output:
     },
     "Metadata": {
       "EventId": 2,
-      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "Exe": "msedge.exe",
       "ProcessId": 7468
     }
   }
@@ -172,7 +231,7 @@ Example output:
     },
     "Metadata": {
       "EventId": 14,
-      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "Exe": "msedge.exe",
       "ProcessId": 33176
     }
   },
@@ -195,59 +254,14 @@ Example output:
     },
     "Metadata": {
       "EventId": 14,
-      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-      "ProcessId": 33176
-    }
-  },
-  {
-    "Data": {
-      "BaseAddress": [
-        "0x7ff8c59105c0",
-        "ntdll!NtMapViewOfSection"
-      ],
-      "BytesCopied": [
-        "0x10"
-      ],
-      "CallingProcessCreateTime": "07:48:16.306",
-      "CallingProcessId": 33176,
-      "CallingProcessProtection": 0,
-      "OperationStatus": 0,
-      "TargetProcessCreateTime": "07:49:37.279",
-      "TargetProcessId": 35948,
-      "TargetProcessProtection": 0
-    },
-    "Metadata": {
-      "EventId": 14,
-      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-      "ProcessId": 33176
-    }
-  },
-  {
-    "Data": {
-      "BaseAddress": [
-        "0x7ff8c5910600",
-        "ntdll!NtUnmapViewOfSection"
-      ],
-      "BytesCopied": [
-        "0x10"
-      ],
-      "CallingProcessCreateTime": "07:48:16.306",
-      "CallingProcessId": 33176,
-      "CallingProcessProtection": 0,
-      "OperationStatus": 0,
-      "TargetProcessCreateTime": "07:49:37.279",
-      "TargetProcessId": 35948,
-      "TargetProcessProtection": 0
-    },
-    "Metadata": {
-      "EventId": 14,
-      "Exe": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "Exe": "msedge.exe",
       "ProcessId": 33176
     }
   }
 ]
-
 ```
+
+---
 
 ### Notes & Issues:
 - Single header dependency ([nlohmann/json](https://github.com/nlohmann/json))
