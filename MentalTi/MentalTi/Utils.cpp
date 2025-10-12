@@ -6,6 +6,7 @@ extern void ParseKeywords(ULONGLONG arg);
 
 namespace Utils {
 
+
     ULONGLONG GetLongBoi(const std::string& arg) {
 
         if (arg.substr(0, 2) == "0x" || arg.substr(0, 2) == "0X") {
@@ -32,17 +33,19 @@ namespace Utils {
         }
     }
 
+
     bool CreateOpenOutputFile(const std::string& filename) {
 
-        g_Global->Vars().OutputHandle.open(filename, std::ios::app);
+        Globals::Get().Vars().OutputHandle.open(filename, std::ios::app);
 
-        if (!g_Global->Vars().OutputHandle.is_open()) {
+        if (!Globals::Get().Vars().OutputHandle.is_open()) {
             std::printf("[!] Error opening/creating output file \n");
             return false;
         }
 
         return true;
     }
+
 
     bool ParseUserKeywords(const std::string& input) {
 
@@ -120,17 +123,24 @@ namespace Utils {
             }
         }
 
-        if (g_Global->Vars().TargetProc) {
-            // Targeting a single process is still buggy
-            SendIOCTL(MENTALTI_SINGLE, flags, g_Global->Vars().TargetProc);
+        // Bits get set in the fucking kernel that enable/disable event emissions
+        // When enabling flipping bit(s) in a single process, no fucking events get emitted
+        // Generational skill issue or windows moment
+
+        if (Globals::Get().Vars().TargetProc) {
+            if (!SendIOCTL(MENTALTI_SINGLE, flags, Globals::Get().Vars().TargetProc)) {
+                return false;
+            }
         }
         else {
-            if (g_Global->Vars().ModifyLoggingAll) {
-                SendIOCTL(MENTALTI_ALL, flags, 0);
+            if (Globals::Get().Vars().ModifyLoggingAll) {
+                if (!SendIOCTL(MENTALTI_ALL, flags, 0)) {
+                    return false;
+                }
             }
         }
 
-        g_Global->Vars().Keywords = combined;
+        Globals::Get().Vars().Keywords = combined;
         return true;
     }
 
@@ -144,16 +154,16 @@ namespace Utils {
 
         std::string pid_string = argv[2];
         if (pid_string == "all") {
-            g_Global->Vars().TargetProc = 0;
-            g_Global->Vars().ModifyLoggingAll = true;
+            Globals::Get().Vars().TargetProc = 0;
+            Globals::Get().Vars().ModifyLoggingAll = true;
         }
         else if (pid_string == "all-og") {
-            g_Global->Vars().TargetProc = 0;
+            Globals::Get().Vars().TargetProc = 0;
         }
         else if (!pid_string.empty()) {
             try {
                 ULONG pid = (ULONG)GetLongBoi(pid_string);
-                g_Global->Vars().TargetProc = pid;
+                Globals::Get().Vars().TargetProc = pid;
             }
             catch (const std::exception& e) {
                 std::cerr << "Error - " << e.what() << std::endl;
@@ -177,13 +187,32 @@ namespace Utils {
             return false;
         }
 
+        if (argc >= 7) {
+
+            std::string flag = argv[5];
+
+            if (flag == "-trace") {
+
+                std::string ids = argv[6];
+
+                for (auto&& tok : std::views::split(ids, ',')) {
+
+                    std::string s(tok.begin(), tok.end());
+                    Globals::Get().Vars().StackTracedEvents.push_back(std::stoi(s));
+                }
+
+                Globals::Get().Vars().StackTrace = true;
+            }
+        }
+
         return true;
     }
 
 
     void PrintHelp() {
 
-        std::printf("\nExample: MentalTi.exe -proc 12215 \"0x10 | 0x80 | 0x2000\" .\\out.json \n\n");
+        std::printf("\nExample1: MentalTi.exe -proc 12215 \"0x10 | 0x80 | 0x2000\" .\\out.json ");
+        std::printf("\nExample2: MentalTi.exe -proc all \"0x4 | 0x40 | 0x400 | 0x1000\" .\\log.json -trace 1,2,3 \n\n");
         std::printf("Arg1 & Arg2 - Specify PID to monitor a specific process or \"all\" to capture from all processes: \n\t -proc <PID> \n\t -proc all \n\t -proc all-og\n\n");
         std::printf("Arg3 - Keywords for specific events (wrap in quotes): \n");
         std::printf(" 0x1\t\t- ALLOCVM_LOCAL\n 0x2\t\t- ALLOCVM_LOCAL_KERNEL\n 0x4\t\t- ALLOCVM_REMOTE\n 0x8\t\t- ALLOCVM_REMOTE_KERNEL\n 0x10\t\t- PROTECTVM_LOCAL\n 0x20\t\t- PROTECTVM_LOCAL_KERNEL\n");
@@ -199,18 +228,18 @@ namespace Utils {
 
     bool SendIOCTL(ULONG ioctl, ULONG flags, ULONG pid) {
 
-        if (!g_Global->Vars().DriverHandle) {
+        if (!Globals::Get().Vars().DriverHandle) {
 
-            g_Global->Vars().DriverHandle = ::CreateFileW(L"\\\\.\\KMentalTi", GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+            Globals::Get().Vars().DriverHandle = ::CreateFileW(L"\\\\.\\KMentalTi", GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-            if (g_Global->Vars().DriverHandle == INVALID_HANDLE_VALUE) {
+            if (Globals::Get().Vars().DriverHandle == INVALID_HANDLE_VALUE) {
                 std::printf("[!] Error getting driver handle: %ld\n", GetLastError());
                 return false;
             }
         }
 
         //don't care, just send some data via params
-        if (!::DeviceIoControl(g_Global->Vars().DriverHandle, ioctl, nullptr, flags, nullptr, pid, nullptr, nullptr)) {
+        if (!::DeviceIoControl(Globals::Get().Vars().DriverHandle, ioctl, nullptr, flags, nullptr, pid, nullptr, nullptr)) {
             std::printf("[!] Error with driver: %ld\n", GetLastError());
             return false;
         }
@@ -225,9 +254,7 @@ namespace Utils {
 
         case CTRL_C_EVENT: {
 
-            delete g_Global;
-
-            ::ExitProcess(0);
+            std::exit(0);
         }
 
         default:

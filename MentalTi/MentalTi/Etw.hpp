@@ -23,6 +23,12 @@ namespace Etw {
 
         ULONG GetProcId() const;
 
+        bool StackTrace64Present() const;
+
+        ULONG StackFrameCount() const;
+
+        ULONG64* StackFrames() const;
+
         template<typename T>
         std::unique_ptr<T> ParseEvent(const std::string& member_name) {
 

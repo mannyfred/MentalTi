@@ -61,10 +61,20 @@ struct std::hash<ModuleInfo> {
     }
 };
 
+struct ProcessInfo {
+    uintptr_t base;
+    uintptr_t end;
+    std::string proc_name;
+};
+
 namespace Symbols {
 
     BOOL EnumSymbolsCallback(SYMBOL_INFO* pSymInfo, ULONG SymbolSize, PVOID UserContext);
     void LoadSymbolsForModule(HMODULE hModule, PWSTR name);
+    void LoadProcessInfo(std::unique_ptr<ULONG>& pid, std::unique_ptr<std::array<char, 420>>& imagename);
+    std::string ResolveProcessSymbol(ULONG pid, uintptr_t address);
+    void NukeProcessInfo(ULONG pid);
+    std::string ReturnProcessExecutable(ULONG pid);
     std::string ResolveSymbol(uintptr_t address);
     bool InitSymbols();
 }

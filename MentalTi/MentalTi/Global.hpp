@@ -5,35 +5,38 @@
 #include <evntrace.h>
 #include <fstream>
 #include <map>
+#include <vector>
 
 struct GlobalData {
 
 	EVENT_TRACE_PROPERTIES* LoggerInfo;
+	EVENT_TRACE_PROPERTIES* LoggerInfo2;
 	TRACEHANDLE             LoggerHandle;
+	TRACEHANDLE             LoggerHandle2;
 	LPWSTR					TraceName;
+	LPWSTR					TraceName2;
 	std::ofstream			OutputHandle;
 	ULONGLONG				Keywords;
 	ULONG					TargetProc;
 	HANDLE					DriverHandle;
-	HANDLE					TargetHandle;
-	ULONG					TargetFlags;
 	bool					ModifyLoggingAll;
+	bool					StackTrace;
+	std::vector<USHORT>		StackTracedEvents;
 };
 
 class Globals {
 public:
 	Globals();
-	static Globals& Get();
-	Globals(Globals const&) = delete;
-	Globals& operator=(Globals const&) = delete;
 	~Globals();
 
+	Globals(Globals const&) = delete;
+	Globals& operator=(Globals const&) = delete;
+
+	static Globals& Get();
 	GlobalData& Vars();
 
 private:
-	static Globals* s_Globals;
 	GlobalData m_Data;
 };
-extern Globals* g_Global;
 
 #endif // !GLOBAL_HPP
