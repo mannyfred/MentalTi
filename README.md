@@ -321,6 +321,11 @@ Example output:
 ---
 
 ### Notes & Issues:
+
+- ALLOCVM/MAPVIEW/PROTECT events get logged only when an executable bit is set
+- There might be some issues related to some other events. If you aren't receiving events, that you clearly should be, try to run with `-proc all`
+
+
 - Single header dependency ([nlohmann/json](https://github.com/nlohmann/json))
 - Event ID 4 and 5 (`QUEUE_REMOTE_APC`/`SETTHREAD_CONTEXT_REMOTE`) always has PID as 4 in the event header. Because of this, when you are targeting a specific PID, all of these events will be logged so you don't miss them.
 - `IsSandboxedToken` in event 35 (`SYSCALL_USAGE`) not working.
