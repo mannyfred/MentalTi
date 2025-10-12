@@ -261,6 +261,63 @@ Example output:
 ]
 ```
 
+#### 5. Detect Remote Memory Protection Change via Randomized Indirect Syscall
+
+- Filter for Event ID 2 (`ETWTI_PROTECTVM_REMOTE`)
+- Check last stackframe to see if it doesn't contain `ntdll!NtProtectVirtualMemory+0x14`
+
+```bash
+cat log.json | jq -s '[ .[] | select(.Metadata.EventId == 2 and .Metadata.Stack[0] != "ntdll!NtProtectVirtualMemory+0x14") ]'
+```
+Example output:
+```json
+[
+  {
+    "Data": {
+      "BaseAddress": [
+        "0x2c0ceb90000"
+      ],
+      "FullRegionSize": 4096,
+      "LastProtectionMask": 4,
+      "ProtectionMask": 64,
+      "RegionSize": [
+        "0x1000"
+      ],
+      "TargetAddress": [
+        "0x2c0ceb90000"
+      ],
+      "TargetProcessId": 5708,
+      "VaVadAllocationBase": [
+        "0x2c0ceb90000"
+      ],
+      "VaVadAllocationProtect": 4,
+      "VaVadCommitSize": [
+        "0x1000"
+      ],
+      "VaVadMmfName": 0,
+      "VaVadQueryResult": 0,
+      "VaVadRegionSize": [
+        "0x1000"
+      ],
+      "VaVadRegionType": 131072
+    },
+    "Metadata": {
+      "EventId": 2,
+      "Exe": "delete.exe",
+      "ProcessId": 536,
+      "Stack": [
+        "ntdll!NtTerminateThread+0x14",
+        "delete.exe+0x1638",
+        "delete.exe+0x1807",
+        "delete.exe+0x1af0",
+        "kernel32!BaseThreadInitThunk+0x17",
+        "ntdll!RtlUserThreadStart+0x2c"
+      ]
+    }
+  }
+]
+```
+
 ---
 
 ### Notes & Issues:
@@ -270,11 +327,4 @@ Example output:
 - `PreviousTokenTrustLevel`, `PreviousTokenGroups`, `CurrentTokenTrustLevel` and `CurrentTokenGroups` not included in events 33 and 36 (`IMPERSONATION_UP`/`IMPERSONATION_DOWN`) since they use some X type for those that I can't be bothered to figure out atm.
 - Uses buffered io - when trying to take a look at the output while it's running, it might not be valid json, or it might be empty all together. When exiting the program, stuff gets flushed to disk and you get everything.
 - Maybe some other issues and edge cases somewhere
-
-### Why:
-- Made it because all other parsers are pretty shit (no event data definitions, need to hardcode members, can't select stuff you want etc)
-- To lose braincells with ETW and C++
-- To get juicy data so that I know how to better blend in, and to write detections for my own EDR
-- To make a base for the usermode agent of my EDR
-
 
