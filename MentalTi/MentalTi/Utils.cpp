@@ -123,10 +123,6 @@ namespace Utils {
             }
         }
 
-        // Bits get set in the fucking kernel that enable/disable event emissions
-        // When enabling flipping bit(s) in a single process, no fucking events get emitted
-        // Generational skill issue or windows moment
-
         if (Globals::Get().Vars().TargetProc) {
             if (!SendIOCTL(MENTALTI_SINGLE, flags, Globals::Get().Vars().TargetProc)) {
                 return false;
@@ -263,5 +259,6 @@ namespace Utils {
     }
 
 }
+
 
 
