@@ -1,0 +1,6 @@
+[submodule "MentalTi/MentalTi/external/LilETW"]
+	path = MentalTi/MentalTi/external/LilETW
+	url = https://github.com/mannyfred/LilETW
+[submodule "MentalTi/MentalTi/external/json"]
+	path = MentalTi/MentalTi/external/json
+	url = https://github.com/nlohmann/json

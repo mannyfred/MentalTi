@@ -15,16 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Etw.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="EtwTi.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Global.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="json.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Mental.hpp">
@@ -38,9 +32,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Etw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Global.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

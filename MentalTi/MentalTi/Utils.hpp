@@ -52,6 +52,7 @@ namespace Utils {
 	void PrintHelp();
 	bool SendIOCTL(ULONG ioctl, ULONG flags, ULONG pid);
 	bool CtrlHandler(DWORD fdwCtrlType);
+	std::string ToUtf8(const std::wstring& w);
 	
 	template<typename T>
 	class ScopeExit;

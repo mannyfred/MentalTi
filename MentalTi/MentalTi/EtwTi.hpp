@@ -1,6 +1,5 @@
 #pragma once
 #include <windows.h>
-#include <winternl.h>
 
 
 // When choosing which members to retrieve, look at structs
@@ -334,7 +333,6 @@ namespace EtwTi {
     X(CallingThreadCreateTime, FILETIME)            \
 
     //Id 35
-    //IsSandboxedToken not included (shit aint working idfk)
 #define ETWTI_SYSCALL_EVENT_FIELDS                  \
     X(CallingProcessId, ULONG)                      \
     X(CallingProcessCreateTime, FILETIME)           \
@@ -346,6 +344,7 @@ namespace EtwTi {
     X(CallingThreadCreateTime, FILETIME)            \
     X(SessionId, ULONG)                             \
     X(SyscallEnum, ULONG)                           \
+    X(IsSandboxedToken, UCHAR)                      \
 
 
 #define X(member, type) type member;

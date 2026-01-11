@@ -133,16 +133,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Etw.hpp" />
     <ClInclude Include="EtwTi.hpp" />
     <ClInclude Include="Global.hpp" />
-    <ClInclude Include="json.hpp" />
     <ClInclude Include="Mental.hpp" />
     <ClInclude Include="Symbols.hpp" />
     <ClInclude Include="Utils.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Etw.cpp" />
     <ClCompile Include="Global.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Symbols.cpp" />

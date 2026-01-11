@@ -14,6 +14,11 @@ Mentally ill Microsoft-Windows-Threat-Intelligence parser that somehow works for
 - C++20 for MentalTi
 - In `Main.cpp` define the statistics interval (in milliseconds)
 
+### Cloning:
+```
+git clone --recurse-submodules https://github.com/mannyfred/MentalTi
+```
+
 ### Running:
 Since PPL is needed for EtwTi, you need to enable testsigning mode and reboot:
 ```

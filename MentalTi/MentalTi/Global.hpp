@@ -9,18 +9,11 @@
 
 struct GlobalData {
 
-	EVENT_TRACE_PROPERTIES* LoggerInfo;
-	EVENT_TRACE_PROPERTIES* LoggerInfo2;
-	TRACEHANDLE             LoggerHandle;
-	TRACEHANDLE             LoggerHandle2;
-	LPWSTR					TraceName;
-	LPWSTR					TraceName2;
 	std::ofstream			OutputHandle;
 	ULONGLONG				Keywords;
 	ULONG					TargetProc;
 	HANDLE					DriverHandle;
 	bool					ModifyLoggingAll;
-	bool					StackTrace;
 	std::vector<USHORT>		StackTracedEvents;
 };
 

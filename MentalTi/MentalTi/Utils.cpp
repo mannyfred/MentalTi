@@ -196,8 +196,6 @@ namespace Utils {
                     std::string s(tok.begin(), tok.end());
                     Globals::Get().Vars().StackTracedEvents.push_back(std::stoi(s));
                 }
-
-                Globals::Get().Vars().StackTrace = true;
             }
         }
 
@@ -258,6 +256,15 @@ namespace Utils {
         }
     }
 
+
+    std::string ToUtf8(const std::wstring& w) {
+        if (w.empty()) return {};
+        int size = ::WideCharToMultiByte(CP_UTF8, 0, w.data(), (int)w.size(), nullptr, 0, nullptr, nullptr);
+        if (size <= 0) return {};
+        std::string s(size, '\0');
+        ::WideCharToMultiByte(CP_UTF8, 0, w.data(), (int)w.size(), s.data(), size, nullptr, nullptr);
+        return s;
+    }
 }
 
 
