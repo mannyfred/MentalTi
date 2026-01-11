@@ -343,7 +343,6 @@ void ParserWrapper(const EventWrapper<T>& wrapper, LilETW::EventParser& parser) 
                     if (value) { json_data[key] = value->Buffer; }
                 }
                 else if constexpr (std::is_same_v<T, std::unique_ptr<SID>>) {
-
                     if (value) {
                         LPSTR lSid;
                         if (::ConvertSidToStringSidA(value.get(), &lSid)) {
@@ -351,9 +350,6 @@ void ParserWrapper(const EventWrapper<T>& wrapper, LilETW::EventParser& parser) 
                             ::LocalFree(lSid);
                         }
                     }
-                }
-                else if constexpr (std::is_same_v<T, std::unique_ptr<char>>) {
-                    if (value) { json_data[key] = std::string(value.get()); }
                 }
 
             }, *value_any);
@@ -376,7 +372,7 @@ void ParserWrapper(const EventWrapper<T>& wrapper, LilETW::EventParser& parser) 
             auto symbol = parser.ResolveSymbol(frame);
 
             if (symbol.empty()) {
-                //symbol = Symbols::ResolveProcessSymbol(id2, frame);
+                symbol = Symbols::ResolveProcessSymbol(id2, frame);
             }
 
             json_stack.push_back(symbol.empty() ? std::format("0x{:x}", frame) : symbol);
